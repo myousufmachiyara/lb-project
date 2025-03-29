@@ -63,6 +63,7 @@
                 .sidebar-logo{
                     width:70%;
                     height:auto;
+                    padding-top: 8px;
                 }	
                 
             }
