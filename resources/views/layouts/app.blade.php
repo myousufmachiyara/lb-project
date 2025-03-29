@@ -65,7 +65,6 @@
                     height:auto;
                     padding-top: 8px;
                 }	
-                
             }
         </style>
     </head>
