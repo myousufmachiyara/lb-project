@@ -2,7 +2,7 @@
   <div class="sidebar-header">
     <div class="sidebar-title pt-2" style="display: flex;justify-content: space-between;">
       <a href="/" class="logo col-11">						
-        <img src="/assets/img/white-logo.png" class="sidebar-logo" alt="Brand Logo" height="50" />
+        <img src="/assets/img/lb-logo.jpg" class="sidebar-logo" alt="Brand Logo" height="50" />
       </a>
       <div class="d-md-none toggle-sidebar-left col-1" data-toggle-class="sidebar-left-opened" data-target="html" data-fire-event="sidebar-left-opened">
         <i class="fas fa-times" aria-label="Toggle sidebar"></i>
