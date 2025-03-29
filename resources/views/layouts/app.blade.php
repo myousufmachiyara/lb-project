@@ -61,7 +61,8 @@
                     padding: 60px 15px 0px 15px;
                 }
                 .sidebar-logo{
-                    width:50%;
+                    width:70%;
+                    height:auto;
                 }	
                 
             }
