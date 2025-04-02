@@ -142,7 +142,7 @@
 
             <div class="logo-container d-md-none">
                 <a href="/" class="logo ">
-                    <img src="/assets/img/logo.png" width="70px" alt="MFI Logo" />
+                    <img src="/assets/img/lb-logo-black.jpg" width="150px" class="pt-3" alt="LB Logo" />
                 </a>
                 <div id="userbox" class="userbox" style="float:right !important;">
                     <a href="#" data-bs-toggle="dropdown" style="margin-right: 20px;">
