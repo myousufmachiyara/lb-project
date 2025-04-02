@@ -27,8 +27,8 @@
               <span>Accounts</span>
             </a>
             <ul class="nav nav-children">
-              <li><a class="nav-link" href="">Subhead Of Accounts</a></li>
-              <li><a class="nav-link" href="">Chart Of Accounts</a></li>	
+              <li><a class="nav-link" href="{{ route('shoa.index') }}">Subhead Of Accounts</a></li>
+              <li><a class="nav-link" href="{{ route('coa.index') }}">Chart Of Accounts</a></li>	
             </ul>
           </li>
 
