@@ -38,7 +38,7 @@
               <span>Projects</span>
             </a>
             <ul class="nav nav-children">
-              <li><a class="nav-link" href="">Status</a></li>
+              <li><a class="nav-link"href="{{ route('project-status.index') }}">Status</a></li>
               <li><a class="nav-link" href="">All Projects</a></li>	
             </ul>
           </li>
