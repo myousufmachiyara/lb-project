@@ -5,10 +5,10 @@ use App\Http\Controllers\SubHeadOfAccController;
 use App\Http\Controllers\COAController;
 use App\Http\Controllers\ProjectStatusController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', function () {
-    return view('home');
-});
+// Home
+Route::get('/', [DashboardController::class, 'index']);
 
 // Accounts
 Route::resource('shoa', SubHeadOfAccController::class);
