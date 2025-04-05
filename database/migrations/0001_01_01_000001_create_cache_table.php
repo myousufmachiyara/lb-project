@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('cache', function (Blueprint $table) {
-            $table->string('key', 255)->primary()->index('key', 191);  // Limit index length to 191 characters
+            $table->string('key', 255)->charset('utf8')->collation('utf8_unicode_ci')->primary();
             $table->mediumText('value');
             $table->integer('expiration');
         });
