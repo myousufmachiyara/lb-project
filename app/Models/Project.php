@@ -12,4 +12,9 @@ class Project extends Model
     protected $table = 'projects';
     
     protected $fillable = ['name', 'acc_id', 'total_pcs'];
+    
+    public function attachments()
+    {
+        return $this->hasMany(ProjectAttachment::class, 'proj_id');
+    }
 }

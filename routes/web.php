@@ -15,7 +15,6 @@ Route::resource('shoa', SubHeadOfAccController::class);
 Route::resource('coa', COAController::class);
 
 // Projects
-Route::resource('project-status', ProjectStatusController::class)->only([
-    'index', 'store', 'update', 'destroy'
-]);
+Route::resource('project-status', ProjectStatusController::class);
+Route::get('project-status/{id}/json', [ProjectStatusController::class, 'showJson'])->name('project-status.show-json');
 Route::resource('projects', ProjectController::class);

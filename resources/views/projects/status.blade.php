@@ -1,20 +1,20 @@
 @extends('layouts.app')
 
-@section('title', 'Accounts | Project Status')
+@section('title', 'Projects | Status')
 
 @section('content')
   <div class="row">
-    @if (session('success'))
-        <div class="alert alert-success">
-            {{ session('success') }}
-        </div>
-    @elseif (session('error'))
-        <div class="alert alert-danger">
-            {{ session('error') }}
-        </div>
-    @endif
     <div class="col">
       <section class="card">
+        @if (session('success'))
+          <div class="alert alert-success">
+            {{ session('success') }}
+          </div>
+        @elseif (session('error'))
+          <div class="alert alert-danger">
+            {{ session('error') }}
+          </div>
+        @endif
         <header class="card-header" style="display: flex;justify-content: space-between;">
             <h2 class="card-title">All Project Status</h2>
             <div>
@@ -33,13 +33,13 @@
                 </tr>
               </thead>
               <tbody>
-                @foreach ($projectStatuses as $item)
+                @foreach ($statuses as $item)
                   <tr>
                     <td>{{ $loop->iteration }}</td>
                     <td>{{ $item->name }}</td>
                     <td><span style="background-color: {{ $item->color }}; color: white;">{{ $item->color }}</span></td>
                     <td>
-                        <a href="{{ route('project-status.edit', $item->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
+                        <a class="text-primary editStatusBtn" data-id="{{ $item->id }}"><i class="fa fa-edit"></i></a>
                         <form action="{{ route('project-status.destroy', $item->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
@@ -119,4 +119,39 @@
       </div>
     </div>
   </div>
+  <script>
+    $(document).ready(function () {
+      $('.editStatusBtn').on('click', function () {
+        const statusId = $(this).data('id');
+
+        // Fetch status data via AJAX
+        $.ajax({
+          url: `/project-status/${statusId}/json`,
+          method: 'GET',
+          success: function (data) {
+            $('#update_status_id').val(data.id);
+            $('#update_status_name').val(data.name);
+            $('#update_status_color').val(data.color);
+            $('#status_id').val(data.id);
+
+            // Set form action dynamically
+            const formAction = `/project-status/${data.id}`;
+            $('#updateModal form').attr('action', formAction);
+            $('#updateModal form').append('<input type="hidden" name="_method" value="PUT">');
+
+            // Open modal
+            $.magnificPopup.open({
+              items: {
+                src: '#updateModal'
+              },
+              type: 'inline'
+            });
+          },
+          error: function () {
+            alert('Failed to fetch project status data.');
+          }
+        });
+      });
+    });
+  </script>
 @endsection

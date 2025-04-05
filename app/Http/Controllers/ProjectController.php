@@ -2,91 +2,49 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProjectStatus;
-use App\Models\Project;
-use App\Models\ProjectAttachment;
+use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment};
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
 
 class ProjectController extends Controller
 {
-    // Project Status CRUD
-    public function getAllProjectStatuses()
+    public function index()
     {
         try {
-            return response()->json(ProjectStatus::all(), 200);
+            $projects = Project::with('attachments')->get();
+            return view('projects.index', compact('projects'));
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to fetch project statuses'], 500);
+            Log::error('Failed to load projects: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Unable to load projects.');
         }
     }
 
-    public function createProjectStatus(Request $request)
+    public function create()
     {
         try {
-            $validated = $request->validate([
-                'name' => 'required|string',
-                'color' => 'required|string',
+            $accounts = ChartOfAccounts::all();
+            $projectStatuses = ProjectStatus::all();
+
+            return view('projects.create', [
+                'accounts' => $accounts,
+                'statuses' => $projectStatuses
             ]);
-
-            $status = ProjectStatus::create($validated);
-            return response()->json($status, 201);
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to create project status'], 500);
+            Log::error('Failed to load project creation form: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Unable to load project form.');
         }
     }
 
-    public function updateProjectStatus(Request $request, $id)
+    public function store(Request $request)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string',
-                'color' => 'required|string',
-            ]);
-
-            $status = ProjectStatus::findOrFail($id);
-            $status->update($validated);
-            return response()->json($status, 200);
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to update project status'], 500);
-        }
-    }
-
-    public function deleteProjectStatus($id)
-    {
-        try {
-            ProjectStatus::findOrFail($id)->delete();
-            return response()->json(['message' => 'Deleted successfully'], 200);
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to delete project status'], 500);
-        }
-    }
-
-    // Project CRUD
-    public function getAllProjects()
-    {
-        try {
-            return response()->json(Project::with('attachments')->get(), 200);
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to fetch projects'], 500);
-        }
-    }
-
-    public function createProject(Request $request)
-    {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string',
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
                 'acc_id' => 'required|exists:chart_of_accounts,id',
-                'total_pcs' => 'required|integer',
-                'attachments' => 'array',
-                'attachments.*' => 'file',
+                'total_pcs' => 'required|integer|min:1',
+                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:2048',
             ]);
 
             $project = Project::create($validated);
@@ -94,50 +52,67 @@ class ProjectController extends Controller
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $path = $file->store('attachments');
-                    ProjectAttachment::create(['proj_id' => $project->id, 'att_path' => $path]);
+                    ProjectAttachment::create([
+                        'proj_id' => $project->id,
+                        'att_path' => $path,
+                    ]);
                 }
             }
 
-            return response()->json($project, 201);
+            return redirect()->route('projects.index')->with('success', 'Project created successfully.');
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to create project'], 500);
+            Log::error('Failed to create project: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to create project.');
         }
     }
 
-    public function updateProject(Request $request, $id)
+    public function edit($id)
+    {
+        try {
+            $project = Project::with('attachments')->findOrFail($id);
+            $accounts = ChartOfAccounts::all();
+            return view('projects.edit', compact('project', 'accounts'));
+        } catch (Exception $e) {
+            Log::error('Failed to load edit form: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Unable to load project.');
+        }
+    }
+
+    public function update(Request $request, $id)
     {
         try {
             $validated = $request->validate([
-                'name' => 'required|string',
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
                 'acc_id' => 'required|exists:chart_of_accounts,id',
-                'total_pcs' => 'required|integer',
+                'total_pcs' => 'required|integer|min:1',
             ]);
 
             $project = Project::findOrFail($id);
             $project->update($validated);
 
-            return response()->json($project, 200);
+            return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to update project'], 500);
+            Log::error('Failed to update project: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to update project.');
         }
     }
 
-    public function deleteProject($id)
+    public function destroy($id)
     {
         try {
-            $project = Project::findOrFail($id);
-            $project->attachments()->each(function ($attachment) {
+            $project = Project::with('attachments')->findOrFail($id);
+
+            foreach ($project->attachments as $attachment) {
                 Storage::delete($attachment->att_path);
                 $attachment->delete();
-            });
-            $project->delete();
+            }
 
-            return response()->json(['message' => 'Deleted successfully'], 200);
+            $project->delete();
+            return redirect()->route('projects.index')->with('success', 'Project deleted successfully.');
         } catch (Exception $e) {
-            Log::error($e->getMessage());
-            return response()->json(['error' => 'Failed to delete project'], 500);
+            Log::error('Failed to delete project: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to delete project.');
         }
     }
 }

@@ -29,7 +29,7 @@ class ProjectStatusController extends Controller
 
     /**
      * Store a newly created project status in storage.
-     */
+    */
     public function store(Request $request)
     {
         try {
@@ -39,7 +39,7 @@ class ProjectStatusController extends Controller
             ]);
 
             $status = ProjectStatus::create($validated);
-            return redirect()->route('projects.status')->with('success', 'Project Status created successfully');
+            return redirect()->route('project-status.index')->with('success', 'Project Status created successfully');
         } catch (\Exception $e) {
             Log::error('Failed to create project status: ' . $e->getMessage());
             return redirect()->route('project-status.index')->with('error', 'Failed to create project status');
@@ -79,20 +79,15 @@ class ProjectStatusController extends Controller
      */
     public function update(Request $request, $id)
     {
-        try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'color' => 'required|string|max:7',
-            ]);
-
-            $status = ProjectStatus::findOrFail($id);
-            $status->update($validated);
-
-            return redirect()->route('projects.status')->with('success', 'Project Status updated successfully');
-        } catch (\Exception $e) {
-            Log::error('Failed to update project status: ' . $e->getMessage());
-            return redirect()->route('project-status.index')->with('error', 'Failed to update project status');
-        }
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'color' => 'required|string|max:7',
+        ]);
+    
+        $status = ProjectStatus::findOrFail($id);
+        $status->update($request->only(['name', 'color']));
+    
+        return redirect()->route('project-status.index')->with('success', 'Project Status updated successfully');
     }
 
     /**
@@ -108,5 +103,11 @@ class ProjectStatusController extends Controller
             Log::error('Failed to delete project status: ' . $e->getMessage());
             return redirect()->route('project-status.index')->with('error', 'Failed to delete project status');
         }
+    }
+
+    public function showJson($id)
+    {
+        $status = ProjectStatus::findOrFail($id);
+        return response()->json($status);
     }
 }
