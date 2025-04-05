@@ -60,8 +60,8 @@ class DatabaseSeeder extends Seeder
 
         ProjectStatus::insert([
             ['id' => 1, 'name' => 'Assigned', 'color' => '#ff3838'],
-            ['id' => 2, 'name' => 'In Progress', 'color' => '#fcff4d'],
-            ['id' => 3, 'name' => 'Completed', 'color' => '#a9f915'],
+            ['id' => 2, 'name' => 'In Progress', 'color' => '#f9b115'],
+            ['id' => 3, 'name' => 'Completed', 'color' => '#8fd016'],
         ]);
     }
 }
