@@ -12,7 +12,7 @@ class ProjectController extends Controller
     public function index()
     {
         try {
-            $projects = Project::with('attachments')->get();
+            $projects = Project::with(['attachments', 'status'])->get();
             return view('projects.index', compact('projects'));
         } catch (Exception $e) {
             Log::error('Failed to load projects: ' . $e->getMessage());
@@ -39,19 +39,26 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         try {
+            // Validate the incoming data
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'acc_id' => 'required|exists:chart_of_accounts,id',
                 'total_pcs' => 'required|integer|min:1',
-                'attachments.*' => 'file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:2048',
+                'status_id' => 'required|exists:project_status,id',
+                'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:2048',
             ]);
 
+            // Create the project
             $project = Project::create($validated);
 
+            // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('attachments');
+                    // Store each attachment in the 'public/attachments' directory
+                    $path = $file->store('attachments', 'public'); // Use 'public' disk to ensure files are publicly accessible
+                    
+                    // Save the attachment information in the database
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
                         'att_path' => $path,
@@ -69,9 +76,10 @@ class ProjectController extends Controller
     public function edit($id)
     {
         try {
-            $project = Project::with('attachments')->findOrFail($id);
+            $project = Project::with(['attachments', 'status'])->findOrFail($id);
             $accounts = ChartOfAccounts::all();
-            return view('projects.edit', compact('project', 'accounts'));
+            $statuses = ProjectStatus::all();
+            return view('projects.edit', compact('project', 'accounts', 'statuses'));
         } catch (Exception $e) {
             Log::error('Failed to load edit form: ' . $e->getMessage());
             return redirect()->route('projects.index')->with('error', 'Unable to load project.');
@@ -86,10 +94,22 @@ class ProjectController extends Controller
                 'description' => 'nullable|string',
                 'acc_id' => 'required|exists:chart_of_accounts,id',
                 'total_pcs' => 'required|integer|min:1',
+                'status_id' => 'required|exists:project_status,id',
             ]);
 
             $project = Project::findOrFail($id);
             $project->update($validated);
+
+            // Handle file uploads (attachments) for the update
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $path = $file->store('attachments', 'public');
+                    ProjectAttachment::create([
+                        'proj_id' => $project->id,
+                        'att_path' => $path,
+                    ]);
+                }
+            }
 
             return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
         } catch (Exception $e) {
@@ -103,8 +123,9 @@ class ProjectController extends Controller
         try {
             $project = Project::with('attachments')->findOrFail($id);
 
+            // Delete all associated attachments
             foreach ($project->attachments as $attachment) {
-                Storage::delete($attachment->att_path);
+                Storage::delete('public/' . $attachment->att_path); // Ensure the correct path is used
                 $attachment->delete();
             }
 

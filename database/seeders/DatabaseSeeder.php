@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Models\HeadOfAccounts;
 use App\Models\SubHeadOfAccounts;
 use App\Models\ChartOfAccounts;
+use App\Models\ProjectStatus;
 
 class DatabaseSeeder extends Seeder
 {
@@ -55,6 +56,12 @@ class DatabaseSeeder extends Seeder
             ['id' => 7, 'shoa_id' => 5 , 'name' => "Sale Account", 'receivables' => "0", 'payables' => "0", 'opening_date' => "2025-01-01", 'remarks' => "Revenue", 'address' => "", 'phone_no' => "",'created_at' => $now, 'updated_at' => $now],
             ['id' => 8, 'shoa_id' => 6 , 'name' => "Expense Account", 'receivables' => "0", 'payables' => "0", 'opening_date' => "2025-01-01", 'remarks' => "Expense", 'address' => "", 'phone_no' => "",'created_at' => $now, 'updated_at' => $now],
             ['id' => 9, 'shoa_id' => 7 , 'name' => "Owner's Equity", 'receivables' => "0", 'payables' => "0", 'opening_date' => "2025-01-01", 'remarks' => "Equity", 'address' => "", 'phone_no' => "",'created_at' => $now, 'updated_at' => $now], 
+        ]);
+
+        ProjectStatus::insert([
+            ['id' => 1, 'name' => 'Assigned', 'color' => '#ff3838'],
+            ['id' => 2, 'name' => 'In Progress', 'color' => '#fcff4d'],
+            ['id' => 3, 'name' => 'Completed', 'color' => '#a9f915'],
         ]);
     }
 }

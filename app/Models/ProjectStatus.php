@@ -12,4 +12,9 @@ class ProjectStatus extends Model
     protected $table = 'project_status';
     
     protected $fillable = ['name', 'color'];
+
+    public function projects()
+    {
+        return $this->hasMany(Project::class, 'status_id');
+    }
 }

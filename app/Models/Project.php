@@ -11,10 +11,20 @@ class Project extends Model
 
     protected $table = 'projects';
     
-    protected $fillable = ['name', 'acc_id', 'total_pcs'];
+    protected $fillable = ['name', 'acc_id', 'total_pcs', 'description', 'status_id'];
     
     public function attachments()
     {
         return $this->hasMany(ProjectAttachment::class, 'proj_id');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(ProjectStatus::class, 'status_id');
+    }
+
+    public function account()
+    {
+        return $this->belongsTo(ChartOfAccounts::class, 'acc_id');
     }
 }

@@ -15,13 +15,13 @@
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
 
-    <table class="table table-bordered">
+    <table class="table table-bordered align-middle">
         <thead>
             <tr>
                 <th>S.No</th>
+                <th>Image</th>
                 <th>Name</th>
                 <th>Status</th>
-                <th>Dates</th>
                 <th>Actions</th>
             </tr>
         </thead>
@@ -29,13 +29,29 @@
             @foreach($projects as $project)
             <tr>
                 <td>{{ $loop->iteration }}</td>
-                <td>{{ $project->name }}</td>
+                
                 <td>
-                    <span class="badge" style="background-color: {{ $project->status->color }};">
-                        {{ $project->status->name }}
+                    @php
+                        $imageAttachment = $project->attachments->firstWhere(function ($att) {
+                            $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
+                            return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+                        });
+                    @endphp
+
+                    @if ($imageAttachment)
+                        <img src="{{ asset('storage/' . $imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                    @else
+                        <span class="text-muted">No Image</span>
+                    @endif
+                </td>
+
+                <td>{{ $project->name }}</td>
+
+                <td>
+                    <span class="badge" style="background-color: {{ $project->status->color ?? '#ccc' }}">
+                        {{ $project->status->name ?? 'No Status' }}
                     </span>
                 </td>
-                <td>{{ $project->start_date }} - {{ $project->end_date }}</td>
                 <td>
                     <a href="{{ route('projects.edit', $project->id) }}" class="btn btn-sm btn-warning">Edit</a>
                     <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
