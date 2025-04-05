@@ -39,7 +39,7 @@
                     @endphp
 
                     @if ($imageAttachment)
-                        <img src="{{ asset('storage/' . $imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                        <img src="{{ asset('public/storage/' . $imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
                     @else
                         <span class="text-muted">No Image</span>
                     @endif
