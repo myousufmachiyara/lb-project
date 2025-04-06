@@ -27,9 +27,9 @@
                                 <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
                             </div>
                             <div class="col-12 col-md-3 mb-3">
-                                <label class="form-label">Account</label>
+                                <label class="form-label">Customer</label>
                                 <select name="acc_id" class="form-select" required>
-                                    <option value="">-- Select Account --</option>
+                                    <option value="">-- Select Customer --</option>
                                     @foreach ($accounts as $account)
                                         <option value="{{ $account->id }}" {{ old('acc_id') == $account->id ? 'selected' : '' }}>
                                             {{ $account->name }}
@@ -54,7 +54,7 @@
                             </div>
                             <div class="col-12 col-md-4 mb-3">
                                 <label class="form-label">Attachments</label>
-                                <input type="file" name="attachments[]" class="form-control" multiple>
+                                <input type="file" name="attachments[]" class="form-control" required multiple>
                             </div>
                             <div class="col-12 col-md-5 mb-3">
                                 <label class="form-label">Description</label>
