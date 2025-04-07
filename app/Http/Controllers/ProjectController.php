@@ -6,6 +6,8 @@ use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
+use Intervention\Image\Facades\Image;
+use Illuminate\Support\Str;
 
 class ProjectController extends Controller
 {
@@ -55,13 +57,21 @@ class ProjectController extends Controller
             // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    // Store each attachment in the 'public/attachments' directory
-                    $path = $file->store('attachments', 'public'); // Use 'public' disk to ensure files are publicly accessible
-                    
-                    // Save the attachment information in the database
+                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+            
+                    // Resize/compress image
+                    $image = Image::make($file)->resize(1200, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize(); // Prevents upsizing small images
+                    })->encode($file->getClientOriginalExtension(), 75); // 75% quality
+            
+                    // Save to storage
+                    Storage::disk('public')->put("attachments/$filename", (string) $image);
+            
+                    // Save path to DB
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
-                        'att_path' => $path,
+                        'att_path' => "attachments/$filename",
                     ]);
                 }
             }
@@ -101,16 +111,29 @@ class ProjectController extends Controller
             $project->update($validated);
 
             // Handle file uploads (attachments) for the update
+            // Check if new attachments are being uploaded
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $path = $file->store('attachments', 'public');
+                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+
+                    // Resize & compress the image
+                    $image = Image::make($file)
+                        ->resize(1200, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        })
+                        ->encode($file->getClientOriginalExtension(), 75); // 75% quality
+
+                    // Save optimized image to 'public/attachments'
+                    Storage::disk('public')->put("attachments/{$filename}", (string) $image);
+
+                    // Save in DB
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
-                        'att_path' => $path,
+                        'att_path' => "attachments/{$filename}",
                     ]);
                 }
             }
-
             return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
         } catch (Exception $e) {
             Log::error('Failed to update project: ' . $e->getMessage());
