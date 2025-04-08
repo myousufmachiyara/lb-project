@@ -6,7 +6,7 @@ use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
-use Intervention\Image\Facades\Image;
+use Intervention\Image\ImageManager;
 use Illuminate\Support\Str;
 
 class ProjectController extends Controller
@@ -40,10 +40,8 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        dd(Image::canvas(100, 100, '#ccc'));
-
         try {
-            // Validate the incoming data
+            // Validate incoming data
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -52,32 +50,42 @@ class ProjectController extends Controller
                 'status_id' => 'required|exists:project_status,id',
                 'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:20480',
             ]);
-
+    
             // Create the project
             $project = Project::create($validated);
-
-            // Handle file uploads (attachments)
+    
+            // Initialize image manager
+            $imageManager = new ImageManager(['driver' => 'gd']); // or 'imagick'
+    
+            // Handle attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
-            
-                    // Resize/compress image
-                    $image = Image::make($file)->resize(1200, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize(); // Prevents upsizing small images
-                    })->encode($file->getClientOriginalExtension(), 75); // 75% quality
-            
-                    // Save to storage
-                    Storage::disk('public')->put("attachments/$filename", (string) $image);
-            
-                    // Save path to DB
+                    $extension = strtolower($file->getClientOriginalExtension());
+                    $filename = Str::random(40) . '.' . $extension;
+    
+                    if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                        // Compress and resize image
+                        $image = $imageManager->make($file)
+                            ->resize(1200, null, function ($constraint) {
+                                $constraint->aspectRatio();
+                                $constraint->upsize();
+                            })
+                            ->encode($extension, 75);
+    
+                        Storage::disk('public')->put("attachments/$filename", (string) $image);
+                    } else {
+                        // Store non-image file directly
+                        $file->storeAs('attachments', $filename, 'public');
+                    }
+    
+                    // Save attachment path in DB
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
                         'att_path' => "attachments/$filename",
                     ]);
                 }
             }
-
+    
             return redirect()->route('projects.index')->with('success', 'Project created successfully.');
         } catch (Exception $e) {
             Log::error('Failed to create project: ' . $e->getMessage());
