@@ -12,7 +12,7 @@ trait SaveImage{
         $number = rand(1,999);
         $numb = $number / 7 ;
         $filenamenew    = date('Y-m-d')."_.".$numb."_.".$extension;
-        $filenamepath   = 'uploads/'.$filenamenew;
+        $filenamepath   = 'uploads/projects'.$filenamenew;
         $filename       = $img->move(public_path('uploads/projects/'),$filenamenew);
         return $filenamepath;
     }
