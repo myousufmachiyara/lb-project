@@ -55,7 +55,7 @@ class ProjectController extends Controller
             $project = Project::create($validated);
     
             // Initialize image manager
-            $imageManager = new ImageManager(['driver' => 'gd']); // or 'imagick'
+            $imageManager = new ImageManager('gd');
     
             // Handle attachments
             if ($request->hasFile('attachments')) {
