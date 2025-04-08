@@ -6,13 +6,12 @@ use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
-use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver as GdDriver;
-use Illuminate\Support\Str;
-use Intervention\Image\Facades\Image;  // Import the Image facade
+use App\Traits\SaveImage;
 
 class ProjectController extends Controller
 {
+    use SaveImage;
+
     public function index()
     {
         try {
@@ -58,22 +57,15 @@ class ProjectController extends Controller
     
             // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
-                    
-                    // Resize/compress image
-                    $image = Image::make($file)->resize(1200, null, function ($constraint) {
-                        $constraint->aspectRatio();
-                        $constraint->upsize(); // Prevents upsizing small images
-                    })->encode($file->getClientOriginalExtension(), 75); // 75% quality
-                    
-                    // Save to storage
-                    Storage::disk('public')->put("attachments/$filename", (string) $image);
-    
-                    // Save path to DB
+                $files = $request->file('attachments');
+                foreach ($files as $file)
+                {
+                    $extension = $file->getClientOriginalExtension();
+                    $att_path = $this->projectDoc($file,$extension);
+
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
-                        'att_path' => "attachments/$filename",
+                        'att_path' => $att_path,
                     ]);
                 }
             }
