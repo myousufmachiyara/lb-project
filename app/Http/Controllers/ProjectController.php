@@ -48,7 +48,7 @@ class ProjectController extends Controller
                 'acc_id' => 'required|exists:chart_of_accounts,id',
                 'total_pcs' => 'required|integer|min:1',
                 'status_id' => 'required|exists:project_status,id',
-                'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:2048',
+                'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:20480',
             ]);
 
             // Create the project
