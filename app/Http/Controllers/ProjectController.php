@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Illuminate\Support\Str;
 
 class ProjectController extends Controller
@@ -55,7 +56,7 @@ class ProjectController extends Controller
             $project = Project::create($validated);
     
             // Initialize image manager
-            $imageManager = new ImageManager('gd');
+            $imageManager = new ImageManager(new GdDriver());
     
             // Handle attachments
             if ($request->hasFile('attachments')) {
