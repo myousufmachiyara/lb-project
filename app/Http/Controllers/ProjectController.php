@@ -9,6 +9,7 @@ use Exception;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Drivers\Gd\Driver as GdDriver;
 use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;  // Import the Image facade
 
 class ProjectController extends Controller
 {
@@ -42,7 +43,7 @@ class ProjectController extends Controller
     public function store(Request $request)
     {
         try {
-            // Validate incoming data
+            // Validate the incoming data
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
@@ -55,31 +56,21 @@ class ProjectController extends Controller
             // Create the project
             $project = Project::create($validated);
     
-            // Initialize image manager
-            $imageManager = new ImageManager(new GdDriver());
-    
-            // Handle attachments
+            // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
-                    $extension = strtolower($file->getClientOriginalExtension());
-                    $filename = Str::random(40) . '.' . $extension;
+                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
+                    
+                    // Resize/compress image
+                    $image = Image::make($file)->resize(1200, null, function ($constraint) {
+                        $constraint->aspectRatio();
+                        $constraint->upsize(); // Prevents upsizing small images
+                    })->encode($file->getClientOriginalExtension(), 75); // 75% quality
+                    
+                    // Save to storage
+                    Storage::disk('public')->put("attachments/$filename", (string) $image);
     
-                    if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                        // Compress and resize image
-                        $image = $imageManager->make($file)
-                        ->resize(1200, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                            $constraint->upsize();
-                        })
-                        ->encode($file->getClientOriginalExtension(), 75); // Corrected this line
-    
-                        Storage::disk('public')->put("attachments/$filename", (string) $image);
-                    } else {
-                        // Store non-image file directly
-                        $file->storeAs('attachments', $filename, 'public');
-                    }
-    
-                    // Save attachment path in DB
+                    // Save path to DB
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
                         'att_path' => "attachments/$filename",
