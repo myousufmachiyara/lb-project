@@ -66,12 +66,12 @@ class ProjectController extends Controller
     
                     if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                         // Compress and resize image
-                        $image = $imageManager->make($file)
-                            ->resize(1200, null, function ($constraint) {
-                                $constraint->aspectRatio();
-                                $constraint->upsize();
-                            })
-                            ->encode($extension, 75);
+                        $image = $imageManager->read($file)
+                        ->resize(1200, null, function ($constraint) {
+                            $constraint->aspectRatio();
+                            $constraint->upsize();
+                        })
+                        ->encode($file->getClientOriginalExtension(), 75);
     
                         Storage::disk('public')->put("attachments/$filename", (string) $image);
                     } else {
