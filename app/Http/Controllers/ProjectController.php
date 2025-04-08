@@ -40,6 +40,8 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+        dd(Image::canvas(100, 100, '#ccc'));
+
         try {
             // Validate the incoming data
             $validated = $request->validate([
