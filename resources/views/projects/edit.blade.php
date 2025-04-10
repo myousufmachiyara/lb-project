@@ -60,7 +60,7 @@
 
                             <div class="col-12 col-md-4 mb-3">
                                 <label class="form-label">Add New Attachments</label>
-                                <input type="file" name="attachments[]" class="form-control" required multiple>
+                                <input type="file" name="attachments[]" class="form-control" multiple>
                             </div>
 
                             <div class="col-12 col-md-5 mb-3">
