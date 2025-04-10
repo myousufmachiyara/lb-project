@@ -1,20 +1,31 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\SubHeadOfAccController;
 use App\Http\Controllers\COAController;
 use App\Http\Controllers\ProjectStatusController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HomeController;
 
-// Home
-Route::get('/', [DashboardController::class, 'index']);
+// Auth routes (login, register, forgot password)
+Auth::routes();
 
-// Accounts
-Route::resource('shoa', SubHeadOfAccController::class);
-Route::resource('coa', COAController::class);
+// All routes below require login
+Route::middleware(['auth'])->group(function () {
+    // Dashboard (home page)
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-// Projects
-Route::resource('project-status', ProjectStatusController::class);
-Route::get('project-status/{id}/json', [ProjectStatusController::class, 'showJson'])->name('project-status.show-json');
-Route::resource('projects', ProjectController::class);
+    // Laravel UI default home route
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
+
+    // Accounts
+    // Route::resource('shoa', SubHeadOfAccController::class);
+    // Route::resource('coa', COAController::class);
+
+    // Projects
+    Route::resource('project-status', ProjectStatusController::class);
+    Route::get('project-status/{id}/json', [ProjectStatusController::class, 'showJson'])->name('project-status.show-json');
+    Route::resource('projects', ProjectController::class);
+});

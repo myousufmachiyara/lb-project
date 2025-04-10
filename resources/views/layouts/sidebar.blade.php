@@ -20,17 +20,6 @@
           <li class="active">
             <a class="nav-link" href="/"> <i class="fa fa-home" aria-hidden="true"></i><span>Dashboard</span></a>    
           </li>
-  
-          <li class="nav-parent">
-            <a class="nav-link" href="#">
-              <i style="font-size:16px" class="fa fa-money-bill" aria-hidden="true"></i>
-              <span>Accounts</span>
-            </a>
-            <ul class="nav nav-children">
-              <li><a class="nav-link" href="{{ route('shoa.index') }}">Subhead Of Accounts</a></li>
-              <li><a class="nav-link" href="{{ route('coa.index') }}">Chart Of Accounts</a></li>	
-            </ul>
-          </li>
 
           <li class="nav-parent">
             <a class="nav-link" href="#">
@@ -43,7 +32,7 @@
             </ul>
           </li>
 
-          <li class="nav-parent">
+          <!-- <li class="nav-parent">
             <a class="nav-link" href="#">
               <i style="font-size:16px" class="fa fa-list" aria-hidden="true"></i>
               <span>Task</span>
@@ -52,7 +41,7 @@
               <li><a class="nav-link" href="">Reoccuring Task</a></li>
               <li><a class="nav-link" href="">All Tasks</a></li>	
             </ul>
-          </li>
+          </li> -->
         </ul>	
       </nav>
 		</div>

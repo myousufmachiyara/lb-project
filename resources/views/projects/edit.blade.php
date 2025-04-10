@@ -36,29 +36,17 @@
                         @method('PUT')
 
                         <div class="row">
-                            <div class="col-12 col-md-2 mb-3">
+                            <div class="col-12 col-md-3 mb-3">
                                 <label class="form-label">Project Name</label>
                                 <input type="text" name="name" class="form-control" required value="{{ old('name', $project->name) }}">
                             </div>
 
-                            <div class="col-12 col-md-3 mb-3">
-                                <label class="form-label">Customer</label>
-                                <select name="acc_id" class="form-select" required>
-                                    <option value="">-- Select Customer --</option>
-                                    @foreach ($accounts as $account)
-                                        <option value="{{ $account->id }}" {{ old('acc_id', $project->acc_id) == $account->id ? 'selected' : '' }}>
-                                            {{ $account->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-12 col-md-1 mb-3">
+                            <div class="col-12 col-md-2 mb-3">
                                 <label class="form-label">Total Pieces</label>
                                 <input type="number" name="total_pcs" class="form-control" required value="{{ old('total_pcs', $project->total_pcs) }}">
                             </div>
 
-                            <div class="col-12 col-md-2 mb-3">
+                            <div class="col-12 col-md-3 mb-3">
                                 <label class="form-label">Status</label>
                                 <select name="status_id" class="form-select" required>
                                     <option value="">-- Select Status --</option>

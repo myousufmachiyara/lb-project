@@ -11,8 +11,10 @@ class Project extends Model
 
     protected $table = 'projects';
     
-    protected $fillable = ['name', 'acc_id', 'total_pcs', 'description', 'status_id'];
+    // protected $fillable = ['name', 'acc_id', 'total_pcs', 'description', 'status_id'];
     
+    protected $fillable = ['name', 'total_pcs', 'description', 'status_id'];
+
     public function attachments()
     {
         return $this->hasMany(ProjectAttachment::class, 'proj_id');
@@ -23,8 +25,8 @@ class Project extends Model
         return $this->belongsTo(ProjectStatus::class, 'status_id');
     }
 
-    public function account()
-    {
-        return $this->belongsTo(ChartOfAccounts::class, 'acc_id');
-    }
+    // public function account()
+    // {
+    //     return $this->belongsTo(ChartOfAccounts::class, 'acc_id');
+    // }
 }
