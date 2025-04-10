@@ -7,19 +7,19 @@
         <div class="col">
             <section class="card">
                 @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
+                <div class="alert alert-success">
+                    {{ session('success') }}
+                </div>
                 @elseif (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
-                    </div>
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
                 @endif
                 <header class="card-header" style="display: flex;justify-content: space-between;">
-                    <h2 class="card-title">Add New Project</h2>
+                    <h2 class="card-title">Add New Projects</h2>
                 </header>
                 <div class="card-body">
-                    <form action="{{ route('projects.store') }}" method="POST" enctype="multipart/form-data" id="project-form">
+                    <form action="{{ route('projects.store') }}" method="POST" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
                             <div class="col-12 col-md-3 mb-3">
@@ -44,7 +44,7 @@
                             </div>
                             <div class="col-12 col-md-4 mb-3">
                                 <label class="form-label">Attachments</label>
-                                <input type="file" name="attachments[]" class="form-control" required multiple id="attachments">
+                                <input type="file" name="attachments[]" class="form-control" required multiple>
                             </div>
                             <div class="col-12 col-md-5 mb-3">
                                 <label class="form-label">Description</label>
@@ -61,61 +61,4 @@
             </section>
         </div>
     </div>
-
-    <script>
-        document.getElementById('attachments').addEventListener('change', function (event) {
-            const files = event.target.files;
-            const formData = new FormData();
-
-            Array.from(files).forEach((file, index) => {
-                if (!file.type.startsWith('image/')) return;
-
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-
-                reader.onload = function () {
-                    const img = new Image();
-                    img.src = reader.result;
-
-                    img.onload = function () {
-                        const canvas = document.createElement('canvas');
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0);
-
-                        canvas.toBlob(blob => {
-                            formData.append('attachments[]', blob, file.name);
-
-                            // When all files are processed, submit the form
-                            if (formData.getAll('attachments[]').length === files.length) {
-                                uploadForm(formData);
-                            }
-                        }, 'image/jpeg', 0.7); // 70% quality
-                    };
-                };
-            });
-        });
-
-        function uploadForm(formData) {
-            // Submit form via AJAX
-            fetch('{{ route('projects.store') }}', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                alert('Project created successfully!');
-                window.location.href = '{{ route('projects.index') }}'; // Redirect to projects index
-            })
-            .catch(error => {
-                alert('Upload failed!');
-                console.error(error);
-            });
-        }
-    </script>
 @endsection
