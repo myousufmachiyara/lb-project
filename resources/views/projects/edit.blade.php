@@ -80,7 +80,7 @@
 
                                             @if (in_array(strtolower($ext), $imageExts))
                                                 <div class="border rounded" style="width: 100px; height: 100px; overflow: hidden;">
-                                                    <img src="{{ asset('public/' . $imageAttachment->att_path) }}" alt="Attachment"  style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <img src="{{ asset('public/' . $attachment->att_path) }}" alt="Attachment" style="width: 100%; height: 100%; object-fit: cover;">
                                                 </div>
                                             @endif
                                         @endforeach
