@@ -58,11 +58,10 @@ class ProjectController extends Controller
             // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
                 $files = $request->file('attachments');
-                foreach ($files as $file)
-                {
+                foreach ($files as $file) {
                     $extension = $file->getClientOriginalExtension();
-                    $att_path = $this->projectDoc($file,$extension);
-
+                    $att_path = $this->projectDoc($file, $extension);
+    
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
                         'att_path' => $att_path,
@@ -76,6 +75,7 @@ class ProjectController extends Controller
             return redirect()->route('projects.index')->with('error', 'Failed to create project.');
         }
     }
+    
 
     public function edit($id)
     {
