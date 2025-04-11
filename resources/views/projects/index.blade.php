@@ -29,6 +29,7 @@
                                     <th>S.No</th>
                                     <th>Image</th>
                                     <th>Name</th>
+                                    <th>Pieces</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
@@ -52,6 +53,7 @@
                                         @endif
                                     </td>
                                     <td>{{ $project->name }}</td>
+                                    <td>{{ $project->total_pcs }}</td>
                                     <td>
                                         <span class="badge" style="background-color: {{ $project->status->color ?? '#ccc' }}">
                                             {{ $project->status->name ?? 'No Status' }}
