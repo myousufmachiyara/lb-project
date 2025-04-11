@@ -88,7 +88,12 @@
     </div>
     <script>
         $(document).ready(function(){
-            var table = $('#cust-datatable-default').DataTable();
+            var table = $('#cust-datatable-default').DataTable(
+                {
+                    "order": [[0, "desc"]],
+                    "pageLength": 25,  // Show all rows
+                }
+            );
 
             $('#columnSelect').on('change', function () {
                 // Clear the previous search
