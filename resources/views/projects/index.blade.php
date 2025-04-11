@@ -99,5 +99,5 @@
                 table.column(columnIndex).search(this.value).draw(); // Apply search and redraw
             });
         });
-    <script>
+    </script>
 @endsection
