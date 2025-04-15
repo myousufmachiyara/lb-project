@@ -108,24 +108,14 @@ class ProjectController extends Controller
             // Handle file uploads (attachments) for the update
             // Check if new attachments are being uploaded
             if ($request->hasFile('attachments')) {
-                foreach ($request->file('attachments') as $file) {
-                    $filename = Str::random(40) . '.' . $file->getClientOriginalExtension();
-
-                    // Resize & compress the image
-                    $image = Image::make($file)
-                        ->resize(1200, null, function ($constraint) {
-                            $constraint->aspectRatio();
-                            $constraint->upsize();
-                        })
-                        ->encode($file->getClientOriginalExtension(), 75); // 75% quality
-
-                    // Save optimized image to 'public/attachments'
-                    Storage::disk('public')->put("attachments/{$filename}", (string) $image);
-
-                    // Save in DB
+                $files = $request->file('attachments');
+                foreach ($files as $file) {
+                    $extension = $file->getClientOriginalExtension();
+                    $att_path = $this->projectDoc($file, $extension);
+    
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
-                        'att_path' => "attachments/{$filename}",
+                        'att_path' => $att_path,
                     ]);
                 }
             }
