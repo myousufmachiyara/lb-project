@@ -93,25 +93,43 @@ class ProjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'total_pcs' => 'required|integer|min:1',
+            'status_id' => 'required|exists:project_status,id',
+        ]);
+    
+        DB::beginTransaction();
+    
         try {
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                // 'acc_id' => 'required|exists:chart_of_accounts,id',
-                'total_pcs' => 'required|integer|min:1',
-                'status_id' => 'required|exists:project_status,id',
-            ]);
-
             $project = Project::findOrFail($id);
             $project->update($validated);
-
-            // Handle file uploads (attachments) for the update
-            // Check if new attachments are being uploaded
+    
+            // 🧹 Delete existing attachments from DB and storage
+            foreach ($project->attachments as $attachment) {
+                $filePath = 'public/' . $attachment->att_path;
+    
+                if (Storage::exists($filePath)) {
+                    if (!Storage::delete($filePath)) {
+                        throw new Exception("Failed to delete file: $filePath");
+                    }
+                }
+    
+                $attachment->delete();
+            }
+    
+            // 📁 Handle new uploads (if any)
             if ($request->hasFile('attachments')) {
                 $files = $request->file('attachments');
+    
                 foreach ($files as $file) {
                     $extension = $file->getClientOriginalExtension();
                     $att_path = $this->projectDoc($file, $extension);
+    
+                    if (!$att_path) {
+                        throw new Exception("Failed to save attachment.");
+                    }
     
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
@@ -119,12 +137,17 @@ class ProjectController extends Controller
                     ]);
                 }
             }
+    
+            DB::commit();
             return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
+    
         } catch (Exception $e) {
-            Log::error('Failed to update project: ' . $e->getMessage());
-            return redirect()->route('projects.index')->with('error', 'Failed to update project.');
+            DB::rollBack();
+    
+            Log::error('Project update failed: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to update project. Please try again.');
         }
-    }
+    }    
 
     public function destroy($id)
     {

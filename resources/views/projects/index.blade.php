@@ -57,7 +57,9 @@
                                         @endphp
 
                                         @if ($imageAttachment)
-                                            <img src="{{ asset('public/' . $imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                        <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox="" data-plugin-options="{ &quot;type&quot;:&quot;image&quot; }" title="{{ $project->name }}">
+                                            <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                        </a>
                                         @else
                                             <span class="text-muted">No Image</span>
                                         @endif

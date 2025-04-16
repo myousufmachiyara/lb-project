@@ -79,8 +79,19 @@
                                             @endphp
 
                                             @if (in_array(strtolower($ext), $imageExts))
-                                                <div class="border rounded" style="width: 100px; height: 100px; overflow: hidden;">
-                                                    <img src="{{ asset('public/' . $attachment->att_path) }}" alt="Attachment" style="width: 100%; height: 100%; object-fit: cover;">
+                                                <div class="attachment-wrapper position-relative border rounded"
+                                                    style="width: 100px; height: 100px; overflow: hidden;">
+                                                    <img src="{{ asset('/public/' . $attachment->att_path) }}"
+                                                        alt="Attachment"
+                                                        class="img-fluid"
+                                                        style="width: 100%; height: 100%; object-fit: cover;">
+
+                                                    <!-- ❌ Remove Button (Visual Only) -->
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-danger position-absolute remove-attachment-btn"
+                                                            style="top: 2px; right: 2px; z-index: 10; padding: 0 6px; line-height: 1;">
+                                                        &times;
+                                                    </button>
                                                 </div>
                                             @endif
                                         @endforeach
@@ -99,6 +110,16 @@
         </div>
     </div>
     <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.remove-attachment-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const wrapper = this.closest('.attachment-wrapper');
+                    wrapper.classList.add('fade-out');
+                    setTimeout(() => wrapper.remove(), 300); // Smooth fade-out
+                });
+            });
+        });
+
         function compressImage(file) {
             const reader = new FileReader();
             reader.readAsDataURL(file);
@@ -117,6 +138,13 @@
                 };
             };
         }
+
     </script>
+    <style>
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.3s ease-out;
+        }
+    </style>
 @endsection
 
