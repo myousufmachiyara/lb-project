@@ -43,24 +43,24 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-        try {
-            // Validate the incoming data
-            $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                // 'acc_id' => 'required|exists:chart_of_accounts,id',
-                'total_pcs' => 'required|integer|min:1',
-                'status_id' => 'required|exists:project_status,id',
-                'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:20480',
-            ]);
+        // Validate the incoming data first
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'total_pcs' => 'required|integer|min:1',
+            'status_id' => 'required|exists:project_status,id',
+            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:20480',
+        ]);
     
+        DB::beginTransaction();
+    
+        try {
             // Create the project
             $project = Project::create($validated);
     
             // Handle file uploads (attachments)
             if ($request->hasFile('attachments')) {
-                $files = $request->file('attachments');
-                foreach ($files as $file) {
+                foreach ($request->file('attachments') as $file) {
                     $extension = $file->getClientOriginalExtension();
                     $att_path = $this->projectDoc($file, $extension);
     
@@ -71,96 +71,95 @@ class ProjectController extends Controller
                 }
             }
     
+            DB::commit();
             return redirect()->route('projects.index')->with('success', 'Project created successfully.');
         } catch (Exception $e) {
+            DB::rollBack();
+    
+            // Optionally delete any files already stored if needed here
+    
             Log::error('Failed to create project: ' . $e->getMessage());
             return redirect()->route('projects.index')->with('error', 'Failed to create project.');
         }
     }
     
-
     public function edit($id)
-{
-    try {
-        $project = Project::with(['attachments', 'status'])->findOrFail($id);
+    {
+        try {
+            $project = Project::with(['attachments', 'status'])->findOrFail($id);
 
-        // Retrieve all statuses for the status dropdown
-        $statuses = ProjectStatus::all();
+            // Retrieve all statuses for the status dropdown
+            $statuses = ProjectStatus::all();
 
-        // Fetch existing attachment IDs (these will be kept by the user)
-        $keptAttachmentIds = $project->attachments->pluck('id')->toArray();
+            // Fetch existing attachment IDs (these will be kept by the user)
+            $keptAttachmentIds = $project->attachments->pluck('id')->toArray();
 
-        // Return the edit view with necessary data
-        return view('projects.edit', compact('project', 'statuses', 'keptAttachmentIds'));
+            // Return the edit view with necessary data
+            return view('projects.edit', compact('project', 'statuses', 'keptAttachmentIds'));
 
-    } catch (Exception $e) {
-        Log::error('Failed to load edit form: ' . $e->getMessage());
-        return redirect()->route('projects.index')->with('error', 'Unable to load project.');
+        } catch (Exception $e) {
+            Log::error('Failed to load edit form: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Unable to load project.');
+        }
     }
-}
 
 
-public function update(Request $request, $id)
-{
-    DB::beginTransaction();
-    
-    try {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'total_pcs' => 'required|integer|min:1',
-            'status_id' => 'required|exists:project_status,id',
-        ]);
+    public function update(Request $request, $id)
+    {
+        DB::beginTransaction();
+        
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'total_pcs' => 'required|integer|min:1',
+                'status_id' => 'required|exists:project_status,id',
+            ]);
 
-        // Get the project
-        $project = Project::findOrFail($id);
-        $project->update($validated);
+            // Get the project
+            $project = Project::findOrFail($id);
+            $project->update($validated);
 
-        // Get list of kept attachments from the request (comma-separated string)
-        $keptAttachments = $request->input('kept_attachments', '');  // Get the kept attachments as a comma-separated string
-        $keptIds = explode(',', $keptAttachments);  // Convert to an array of IDs
+            // Get list of kept attachments from the request (comma-separated string)
+            $keptAttachments = $request->input('kept_attachments', '');  // Get the kept attachments as a comma-separated string
+            $keptIds = explode(',', $keptAttachments);  // Convert to an array of IDs
 
-        // Loop through all attachments and delete those not marked as "kept"
-        foreach ($project->attachments as $attachment) {
-            // Check if the attachment ID is in the list of kept IDs
-            if (!in_array($attachment->id, $keptIds)) {
-                // Delete file from storage
-                $fullPath = public_path($attachment->att_path);
-                if (File::exists($fullPath)) {
-                    File::delete($fullPath);
+            // Loop through all attachments and delete those not marked as "kept"
+            foreach ($project->attachments as $attachment) {
+                // Check if the attachment ID is in the list of kept IDs
+                if (!in_array($attachment->id, $keptIds)) {
+                    // Delete file from storage
+                    $fullPath = public_path($attachment->att_path);
+                    if (File::exists($fullPath)) {
+                        File::delete($fullPath);
+                    }
+
+                    // Delete DB record
+                    $attachment->delete();
                 }
-
-                // Delete DB record
-                $attachment->delete();
             }
-        }
 
-        // Upload new attachments
-        if ($request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $file) {
-                $extension = $file->getClientOriginalExtension();
-                $att_path = $this->projectDoc($file, $extension);
+            // Upload new attachments
+            if ($request->hasFile('attachments')) {
+                foreach ($request->file('attachments') as $file) {
+                    $extension = $file->getClientOriginalExtension();
+                    $att_path = $this->projectDoc($file, $extension);
 
-                ProjectAttachment::create([
-                    'proj_id' => $project->id,
-                    'att_path' => $att_path,
-                ]);
+                    ProjectAttachment::create([
+                        'proj_id' => $project->id,
+                        'att_path' => $att_path,
+                    ]);
+                }
             }
-        }
 
-        DB::commit();
-        return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Update Project Error: ' . $e->getMessage());
-        return redirect()->route('projects.index')->with('error', 'Failed to update project.');
+            DB::commit();
+            return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Update Project Error: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to update project.');
+        }
     }
-}
-
-
-    
-    
-    
 
     public function destroy($id)
     {
