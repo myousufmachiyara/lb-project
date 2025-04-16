@@ -82,7 +82,7 @@
                                             @if (in_array(strtolower($ext), $imageExts))
                                                 <div class="attachment-wrapper position-relative border rounded"
                                                     data-id="{{ $attachment->id }}"
-                                                    style="width: 100px; height: 100px; overflow: hidden;">
+                                                    style="width: 100px; overflow: hidden;">
                                                     <a href="{{ asset($attachment->att_path) }}" data-plugin-lightbox="" data-plugin-options="{ &quot;type&quot;:&quot;image&quot; }" title="{{ $project->name }}">
                                                         <img class="img-fluid" src="{{ asset($attachment->att_path) }}" alt="Project Image" style="object-fit: cover; border-radius: 6px;">
                                                     </a>
