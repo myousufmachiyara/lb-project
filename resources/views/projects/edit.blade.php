@@ -83,10 +83,9 @@
                                                 <div class="attachment-wrapper position-relative border rounded"
                                                     data-id="{{ $attachment->id }}"
                                                     style="width: 100px; height: 100px; overflow: hidden;">
-                                                    <img src="{{ asset($attachment->att_path) }}"
-                                                        alt="Attachment"
-                                                        class="img-fluid"
-                                                        style="width: 100%; height: 100%; object-fit: cover;">
+                                                    <a href="{{ asset($attachment->att_path) }}" data-plugin-lightbox="" data-plugin-options="{ &quot;type&quot;:&quot;image&quot; }" title="{{ $project->name }}">
+                                                        <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                                    </a>
 
                                                     <!-- ❌ Remove Button (Visual Only) -->
                                                     <button type="button"
