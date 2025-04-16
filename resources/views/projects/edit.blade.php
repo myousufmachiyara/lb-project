@@ -81,7 +81,7 @@
                                             @if (in_array(strtolower($ext), $imageExts))
                                                 <div class="attachment-wrapper position-relative border rounded"
                                                     style="width: 100px; height: 100px; overflow: hidden;">
-                                                    <img src="{{ asset('/public/' . $attachment->att_path) }}"
+                                                    <img src="{{ asset($attachment->att_path) }}"
                                                         alt="Attachment"
                                                         class="img-fluid"
                                                         style="width: 100%; height: 100%; object-fit: cover;">
