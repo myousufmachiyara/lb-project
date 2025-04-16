@@ -97,6 +97,22 @@
                 }
             );
 
+            table.on('draw', function () {
+                if (typeof $.fn.themePluginLightbox !== 'undefined') {
+                    $('[data-plugin-lightbox]').each(function () {
+                        var $this = $(this),
+                            opts;
+
+                        var pluginOptions = $this.data('plugin-options');
+                        if (pluginOptions) {
+                            opts = pluginOptions;
+                        }
+
+                        $this.themePluginLightbox(opts);
+                    });
+                }
+            });
+
             $('#columnSelect').on('change', function () {
                 // Clear the previous search
                 table.search('').columns().search('').draw(); // Reset global and column-specific filters
