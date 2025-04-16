@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
 use App\Traits\SaveImage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 class ProjectController extends Controller
 {
@@ -78,76 +80,87 @@ class ProjectController extends Controller
     
 
     public function edit($id)
-    {
-        try {
-            $project = Project::with(['attachments', 'status'])->findOrFail($id);
-            // $accounts = ChartOfAccounts::all();
-            $statuses = ProjectStatus::all();
-            return view('projects.edit', compact('project', 'statuses'));
-            // return view('projects.edit', compact('project', 'accounts', 'statuses'));
-        } catch (Exception $e) {
-            Log::error('Failed to load edit form: ' . $e->getMessage());
-            return redirect()->route('projects.index')->with('error', 'Unable to load project.');
-        }
-    }
+{
+    try {
+        $project = Project::with(['attachments', 'status'])->findOrFail($id);
 
-    public function update(Request $request, $id)
-    {
+        // Retrieve all statuses for the status dropdown
+        $statuses = ProjectStatus::all();
+
+        // Fetch existing attachment IDs (these will be kept by the user)
+        $keptAttachmentIds = $project->attachments->pluck('id')->toArray();
+
+        // Return the edit view with necessary data
+        return view('projects.edit', compact('project', 'statuses', 'keptAttachmentIds'));
+
+    } catch (Exception $e) {
+        Log::error('Failed to load edit form: ' . $e->getMessage());
+        return redirect()->route('projects.index')->with('error', 'Unable to load project.');
+    }
+}
+
+
+public function update(Request $request, $id)
+{
+    DB::beginTransaction();
+    
+    try {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'total_pcs' => 'required|integer|min:1',
             'status_id' => 'required|exists:project_status,id',
         ]);
-    
-        DB::beginTransaction();
-    
-        try {
-            $project = Project::findOrFail($id);
-            $project->update($validated);
-    
-            // 🧹 Delete existing attachments from DB and storage
-            foreach ($project->attachments as $attachment) {
-                $filePath = 'public/' . $attachment->att_path;
-    
-                if (Storage::exists($filePath)) {
-                    if (!Storage::delete($filePath)) {
-                        throw new Exception("Failed to delete file: $filePath");
-                    }
+
+        // Get the project
+        $project = Project::findOrFail($id);
+        $project->update($validated);
+
+        // Get list of kept attachments from the request (comma-separated string)
+        $keptAttachments = $request->input('kept_attachments', '');  // Get the kept attachments as a comma-separated string
+        $keptIds = explode(',', $keptAttachments);  // Convert to an array of IDs
+
+        // Loop through all attachments and delete those not marked as "kept"
+        foreach ($project->attachments as $attachment) {
+            // Check if the attachment ID is in the list of kept IDs
+            if (!in_array($attachment->id, $keptIds)) {
+                // Delete file from storage
+                $fullPath = public_path($attachment->att_path);
+                if (File::exists($fullPath)) {
+                    File::delete($fullPath);
                 }
-    
+
+                // Delete DB record
                 $attachment->delete();
             }
-    
-            // 📁 Handle new uploads (if any)
-            if ($request->hasFile('attachments')) {
-                $files = $request->file('attachments');
-    
-                foreach ($files as $file) {
-                    $extension = $file->getClientOriginalExtension();
-                    $att_path = $this->projectDoc($file, $extension);
-    
-                    if (!$att_path) {
-                        throw new Exception("Failed to save attachment.");
-                    }
-    
-                    ProjectAttachment::create([
-                        'proj_id' => $project->id,
-                        'att_path' => $att_path,
-                    ]);
-                }
-            }
-    
-            DB::commit();
-            return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
-    
-        } catch (Exception $e) {
-            DB::rollBack();
-    
-            Log::error('Project update failed: ' . $e->getMessage());
-            return redirect()->route('projects.index')->with('error', 'Failed to update project. Please try again.');
         }
-    }    
+
+        // Upload new attachments
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $extension = $file->getClientOriginalExtension();
+                $att_path = $this->projectDoc($file, $extension);
+
+                ProjectAttachment::create([
+                    'proj_id' => $project->id,
+                    'att_path' => $att_path,
+                ]);
+            }
+        }
+
+        DB::commit();
+        return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Update Project Error: ' . $e->getMessage());
+        return redirect()->route('projects.index')->with('error', 'Failed to update project.');
+    }
+}
+
+
+    
+    
+    
 
     public function destroy($id)
     {

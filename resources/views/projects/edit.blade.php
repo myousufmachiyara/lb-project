@@ -59,14 +59,15 @@
                             </div>
 
                             <div class="col-12 col-md-4 mb-3">
-                                <label class="form-label">Add New Attachments</label>
+                                <label class="form-label">Attachments</label>
                                 <input type="file" name="attachments[]" class="form-control" multiple>
                             </div>
 
                             <div class="col-12 col-md-5 mb-3">
                                 <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="4">{{ old('description', $project->description) }}</textarea>
+                                <textarea name="description" class="form-control" rows="4" required                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              >{{ old('description', $project->description) }}</textarea>
                             </div>
+                            <input type="hidden" name="kept_attachments" id="keptAttachments" value="{{ implode(',', $keptAttachmentIds) }}">
 
                             @if ($project->attachments->count())
                                 <div class="col-12 mt-3">
@@ -80,6 +81,7 @@
 
                                             @if (in_array(strtolower($ext), $imageExts))
                                                 <div class="attachment-wrapper position-relative border rounded"
+                                                    data-id="{{ $attachment->id }}"
                                                     style="width: 100px; height: 100px; overflow: hidden;">
                                                     <img src="{{ asset($attachment->att_path) }}"
                                                         alt="Attachment"
@@ -110,15 +112,29 @@
         </div>
     </div>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.remove-attachment-btn').forEach(button => {
-                button.addEventListener('click', function () {
-                    const wrapper = this.closest('.attachment-wrapper');
-                    wrapper.classList.add('fade-out');
-                    setTimeout(() => wrapper.remove(), 300); // Smooth fade-out
-                });
-            });
+   document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.remove-attachment-btn').forEach(button => {
+        button.addEventListener('click', function () {
+            const wrapper = this.closest('.attachment-wrapper');
+            const attachmentId = wrapper.getAttribute('data-id');  // Get the ID of the attachment
+
+            // Remove the attachment visually (fade-out effect)
+            wrapper.classList.add('fade-out');
+            setTimeout(() => wrapper.remove(), 300);
+
+            // Update the kept_attachments hidden input field
+            let keptAttachments = document.getElementById('keptAttachments').value;
+            keptAttachments = keptAttachments ? keptAttachments.split(',') : [];  // Convert the value to an array
+
+            // Remove the attachment ID from the list of kept attachments
+            keptAttachments = keptAttachments.filter(id => id !== attachmentId);
+
+            // Update the hidden input value
+            document.getElementById('keptAttachments').value = keptAttachments.join(',');
         });
+    });
+});
+
 
         function compressImage(file) {
             const reader = new FileReader();

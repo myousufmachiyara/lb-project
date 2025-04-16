@@ -48,7 +48,7 @@
                             </div>
                             <div class="col-12 col-md-5 mb-3">
                                 <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="4">{{ old('description') }}</textarea>
+                                <textarea name="description" class="form-control" rows="4" required>{{ old('description') }}</textarea>
                             </div>
                             
                             <footer class="card-footer text-end mt-2">
