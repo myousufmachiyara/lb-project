@@ -292,8 +292,7 @@
                     },
                     success: function (response) {
                         if (response.success) {
-                            // Remove the row from the table
-                            btn.closest('tr').remove();
+                            location.reload();
                         }
                     },
                     error: function (xhr) {
