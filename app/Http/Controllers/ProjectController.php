@@ -17,7 +17,7 @@ class ProjectController extends Controller
     public function index()
     {
         try {
-            $projects = Project::with(['attachments', 'status'])->get();
+            $projects = Project::with(['attachments', 'status', 'pcsInOut'])->get();
             return view('projects.index', compact('projects'));
         } catch (Exception $e) {
             Log::error('Failed to load projects: ' . $e->getMessage());

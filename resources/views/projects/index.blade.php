@@ -67,9 +67,15 @@
                                         @endif
                                     </td>
                                     <td>{{ $project->name }}</td>
-                                    <td>{{ $project->total_pcs }}</td>
-                                    <td>-</td>
-                                    <td>-</td>
+                                    @php
+                                        $pcsIn = $project->pcsInOut->where('type', 'in')->sum('pcs');
+                                        $pcsOut = $project->pcsInOut->where('type', 'out')->sum('pcs');
+                                        $totalOrdered = $project->total_pcs + $pcsIn;
+                                        $remaining = $totalOrdered - $pcsOut;
+                                    @endphp
+                                    <td>{{ $totalOrdered }}</td>
+                                    <td>{{ $pcsOut }}</td>
+                                    <td>{{ $remaining }}</td>
                                     <td>
                                         <span class="badge" style="background-color: {{ $project->status->color ?? '#ccc' }}">
                                             {{ $project->status->name ?? 'No Status' }}
