@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment};
+use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment, ProjectPcsInOut};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
@@ -43,15 +43,17 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
+
         // Validate the incoming data first
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'total_pcs' => 'required|integer|min:1',
             'status_id' => 'required|exists:project_status,id',
-            'attachments.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf,docx,xlsx|max:20480',
+            'attachments.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
         ]);
-    
+        Log::info('Validation passed', $validated);
+
         DB::beginTransaction();
     
         try {
@@ -75,7 +77,8 @@ class ProjectController extends Controller
             return redirect()->route('projects.index')->with('success', 'Project created successfully.');
         } catch (Exception $e) {
             DB::rollBack();
-    
+            dd($e); // or dd($e->getMessage(), $e->getTraceAsString());
+
             // Optionally delete any files already stored if needed here
     
             Log::error('Failed to create project: ' . $e->getMessage());
@@ -103,6 +106,44 @@ class ProjectController extends Controller
         }
     }
 
+    public function pcsUpdate(Request $request, $id){
+
+        DB::beginTransaction();
+        
+        try {
+            $validated = $request->validate([
+                'project_id' => 'required|exists:projects,id',
+                'date' => 'required|date', 
+                'type' => 'required|string',
+                'pcs' => 'required|integer|min:1',
+                'remarks' => 'nullable|string',
+            ]);
+
+            $project_pcs_in_out = ProjectPcsInOut::create($validated);
+
+            DB::commit();
+
+            return redirect()->route('projects.index')->with('success', 'Project Pieces updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Update Project Pcs Error: ' . $e->getMessage());
+            return redirect()->route('projects.index')->with('error', 'Failed to update project pcs.');
+        }
+    }
+
+    public function getPcs($id)
+    {
+        $pcsRecords = ProjectPcsInOut::where('project_id', $id)->orderBy('date', 'desc')->get();
+        return response()->json($pcsRecords);
+    }
+
+    public function deletePcs($id)
+    {
+        $pcs = ProjectPcsInOut::findOrFail($id);
+        $pcs->delete();
+
+        return response()->json(['success' => true]);
+    }
 
     public function update(Request $request, $id)
     {

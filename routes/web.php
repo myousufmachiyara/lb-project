@@ -28,4 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('project-status', ProjectStatusController::class);
     Route::get('project-status/{id}/json', [ProjectStatusController::class, 'showJson'])->name('project-status.show-json');
     Route::resource('projects', ProjectController::class);
+    Route::post('project-pcs-update/{id}', [ProjectController::class, 'pcsUpdate'])->name('project-pcs-update');
+    Route::get('project-pcs-show/{id}', [ProjectController::class, 'getPcs'])->name('project-pcs-show');
+    Route::delete('project-pcs-delete/{id}', [ProjectController::class, 'deletePcs'])->name('project-pcs-delete');
 });

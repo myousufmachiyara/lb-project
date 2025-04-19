@@ -25,11 +25,14 @@
                             <div class="col-12 col-md-3 mb-3">
                                 <label class="form-label">Project Name</label>
                                 <input type="text" name="name" class="form-control" required value="{{ old('name') }}">
+                                @error('name')<div class="text-danger">{{ $message }}</div>@enderror
+
                             </div>
                             
                             <div class="col-12 col-md-2 mb-3">
                                 <label class="form-label">Total Pieces</label>
                                 <input type="number" name="total_pcs" class="form-control" required value="{{ old('total_pcs') }}">
+                                @error('total_pcs')<div class="text-danger">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-12 col-md-3 mb-3">
                                 <label class="form-label">Status</label>
@@ -41,16 +44,26 @@
                                         </option>
                                     @endforeach
                                 </select>
+                                @error('status_id')<div class="text-danger">{{ $message }}</div>@enderror
                             </div>
                             <div class="col-12 col-md-4 mb-3">
                                 <label class="form-label">Attachments</label>
-                                <input type="file" name="attachments[]" class="form-control" required multiple>
+                                <input type="file" name="attachments[]" class="form-control" multiple accept="image/*">
+                                @if ($errors->has('attachments.*'))
+                                    @foreach ($errors->get('attachments.*') as $messages)
+                                        @foreach ($messages as $message)
+                                            <div class="text-danger">{{ $message }}</div>
+                                        @endforeach
+                                    @endforeach
+                                @endif                            
                             </div>
                             <div class="col-12 col-md-5 mb-3">
                                 <label class="form-label">Description</label>
                                 <textarea name="description" class="form-control" rows="4" required>{{ old('description') }}</textarea>
+                                @error('description')<div class="text-danger">{{ $message }}</div>@enderror
                             </div>
-                            
+                            <div id="preview-images" class="mt-2"></div>
+
                             <footer class="card-footer text-end mt-2">
                                 <a class="btn btn-danger" href="{{ route('projects.index') }}">Discard</a>
                                 <button type="submit" class="btn btn-primary">Create</button>
@@ -61,4 +74,21 @@
             </section>
         </div>
     </div>
+    <script>
+        function previewImages(event) {
+            const preview = document.getElementById('preview-images');
+            preview.innerHTML = '';
+            Array.from(event.target.files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'me-2 mb-2';
+                    img.style.maxHeight = '100px';
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    </script>
 @endsection
