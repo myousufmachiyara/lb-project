@@ -27,7 +27,7 @@
                             <select class="form-control" style="margin-right:10px" id="columnSelect">
                                 <option selected disabled>Search by</option>
                                 <option value="2">by Name</option>
-                                <option value="4">by Status</option>
+                                <option value="6">by Status</option>
                             </select>
                             <input type="text" class="form-control" id="columnSearch" placeholder="Search By Column"/>
                         </div>
