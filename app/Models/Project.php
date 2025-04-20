@@ -46,6 +46,6 @@ class Project extends Model
                 - SUM(CASE WHEN io.type = "out" THEN io.pieces ELSE 0 END)
                 as total
             ')
-            ->value('total');
+            ->value('total') ?? 0;  // fallback if null
     }
 }
