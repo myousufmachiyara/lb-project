@@ -27,7 +27,7 @@
                 <div  style="background-image: url('/assets/img/bank-icon.png') " class="card-body icon-container">
                     <h3 class="amount text-dark"><strong>Total Pieces</strong></h3>
                     <h2 class="amount m-0 text-danger actual-data">
-                        <strong>{{ $totalPieces }}</strong>
+                        <strong>{{ $totalPiecesInProcess }}</strong>
                         <!-- <span class="title text-end text-dark h6"> PKR</span> -->
                     </h2>
                     <div class="summary-footer">

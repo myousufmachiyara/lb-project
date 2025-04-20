@@ -16,9 +16,10 @@ class DashboardController extends Controller
             $totalProjects = Project::where('status_id', 2)->count();
     
             // Total number of pieces in projects with status_id = 2
-            $totalPieces = Project::where('status_id', 2)->sum('total_pcs');
+            $totalPiecesInProcess = Project::totalPiecesInProcess();
+
     
-            return view('home', compact('totalProjects', 'totalPieces'));
+            return view('home', compact('totalProjects', 'totalPiecesInProcess'));
         } catch (Exception $e) {
             Log::error('Dashboard index error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Unable to load dashboard data.');
