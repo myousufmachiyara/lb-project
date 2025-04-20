@@ -42,8 +42,8 @@ class Project extends Model
             ->where('p.status_id', 2)
             ->selectRaw('
                 SUM(p.total_pcs) 
-                + SUM(CASE WHEN io.type = "in" THEN io.pieces ELSE 0 END)
-                - SUM(CASE WHEN io.type = "out" THEN io.pieces ELSE 0 END)
+                + SUM(CASE WHEN io.type = "in" THEN io.pcs ELSE 0 END)
+                - SUM(CASE WHEN io.type = "out" THEN io.pcs ELSE 0 END)
                 as total
             ')
             ->value('total') ?? 0;  // fallback if null
