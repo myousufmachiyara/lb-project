@@ -25,7 +25,7 @@
         <div class="col-12 col-md-3 mb-2">
             <section class="card card-featured-left card-featured-danger mt-3">
                 <div  style="background-image: url('/assets/img/bank-icon.png') " class="card-body icon-container">
-                    <h3 class="amount text-dark"><strong>Total Pieces</strong></h3>
+                    <h3 class="amount text-dark"><strong>Pieces In Production</strong></h3>
                     <h2 class="amount m-0 text-danger actual-data">
                         <strong>{{ $totalPiecesInProcess }}</strong>
                         <!-- <span class="title text-end text-dark h6"> PKR</span> -->
