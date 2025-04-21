@@ -180,12 +180,13 @@
     </div>
     <script>
         $(document).ready(function(){
-            var table = $('#cust-datatable-default').DataTable(
-                {
-                    "order": [[0, "desc"]],
-                    "pageLength": 25,  // Show all rows
-                }
-            );
+            var table = $('#cust-datatable-default').DataTable({
+                "order": [
+                    [0, "desc"], // First sort by column 0 descending
+                    [6, "desc"]  // Then sort by column 6 descending
+                ],
+                "pageLength": 100
+            });
 
             table.on('draw', function () {
                 if (typeof $.fn.themePluginLightbox !== 'undefined') {
