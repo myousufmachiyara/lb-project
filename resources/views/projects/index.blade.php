@@ -27,7 +27,7 @@
                             <select class="form-control" style="margin-right:10px" id="columnSelect">
                                 <option selected disabled>Search by</option>
                                 <option value="2">by Name</option>
-                                <option value="6">by Status</option>
+                                <option value="4">by Status</option>
                             </select>
                             <input type="text" class="form-control" id="columnSearch" placeholder="Search By Column"/>
                         </div>
@@ -39,8 +39,6 @@
                                     <th>S.No</th>
                                     <th>Image</th>
                                     <th>Name</th>
-                                    <th>Ordered</th>
-                                    <th>Delivered</th>
                                     <th>Remaining</th>
                                     <th>Status</th>
                                     <th>Actions</th>
@@ -73,8 +71,6 @@
                                         $totalOrdered = $project->total_pcs + $pcsIn;
                                         $remaining = $totalOrdered - $pcsOut;
                                     @endphp
-                                    <td>{{ $totalOrdered }}</td>
-                                    <td>{{ $pcsOut }}</td>
                                     <td>{{ $remaining }}</td>
                                     <td>
                                         <span class="badge" style="background-color: {{ $project->status->color ?? '#ccc' }}">
@@ -182,7 +178,7 @@
         $(document).ready(function(){
             var table = $('#cust-datatable-default').DataTable(
                 {
-                    "order": [[6, "desc"]],
+                    "order": [[4, "desc"]],
                     "pageLength": 100,  // Show all rows
                 }
             );
@@ -212,8 +208,6 @@
                 table.column(columnIndex).search(this.value).draw(); // Apply search and redraw
             });
         });
-
-        
 
         $('.updatePcsBtn').on('click', function () {
             const projectId = $(this).data('id');
