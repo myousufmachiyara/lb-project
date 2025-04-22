@@ -84,7 +84,7 @@
                                         <form action="{{ route('projects.destroy', $project->id) }}" method="POST" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
-                                            <a class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></a>
+                                            <button type="submit" class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></button>
                                         </form>                                       
                                     </td>
                                 </tr>
@@ -295,5 +295,7 @@
                 });
             }
         });
+
+    
     </script>
 @endsection
