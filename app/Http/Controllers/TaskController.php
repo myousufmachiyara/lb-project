@@ -20,17 +20,6 @@ class TaskController extends Controller
         }
     }
 
-    /**
-     * Show create task form.
-     */
-    public function create()
-    {
-        return view('tasks.create');
-    }
-
-    /**
-     * Store new task.
-     */
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -57,23 +46,6 @@ class TaskController extends Controller
         }
     }
 
-    /**
-     * Show edit task form.
-     */
-    public function edit($id)
-    {
-        try {
-            $task = Task::findOrFail($id);
-            return view('tasks.edit', compact('task'));
-        } catch (\Exception $e) {
-            Log::error('Error fetching task for edit: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Task not found.');
-        }
-    }
-
-    /**
-     * Update existing task.
-     */
     public function update(Request $request, $id)
     {
         DB::beginTransaction();
