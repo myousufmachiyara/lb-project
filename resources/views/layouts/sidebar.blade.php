@@ -32,16 +32,16 @@
             </ul>
           </li>
 
-          <!-- <li class="nav-parent">
+          <li class="nav-parent">
             <a class="nav-link" href="#">
               <i style="font-size:16px" class="fa fa-list" aria-hidden="true"></i>
               <span>Task</span>
             </a>
             <ul class="nav nav-children">
-              <li><a class="nav-link" href="">Reoccuring Task</a></li>
-              <li><a class="nav-link" href="">All Tasks</a></li>	
+              <li><a class="nav-link" href="{{ route('task-categories.index') }}">Categories</a></li>	
+              <li><a class="nav-link" href="{{ route('tasks.index') }}">All Task</a></li>	
             </ul>
-          </li> -->
+          </li>
         </ul>	
       </nav>
 		</div>
