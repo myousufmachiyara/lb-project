@@ -187,7 +187,7 @@
             <div class="text-end">  
                 <div>
                 Powered By
-                <a target="_blank" href="#">Team TGM</a> 
+                <a target="_blank" href="#">Yousuf Machiyara</a> 
                 </div>
             </div>
         </footer>

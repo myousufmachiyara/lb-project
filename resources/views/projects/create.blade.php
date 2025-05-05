@@ -72,6 +72,89 @@
                     </form>
                 </div>
             </section>
+
+
+            <section class="card">
+          <header class="card-header">
+						<div style="display: flex;justify-content: space-between;">
+              <h2 class="card-title">Item Details</h2>
+						</div>
+						@if ($errors->has('error'))
+							<strong class="text-danger">{{ $errors->first('error') }}</strong>
+						@endif
+					</header>
+          <div class="card-body" style="max-height:400px; overflow-y:auto">
+            <table class="table table-bordered" id="myTable">
+              <thead>
+                <tr>
+                  <th width="2%">Item Name</th>
+                  <th>Width</th>
+                  <th>Description</th>
+                  <th>Rate</th>
+                  <th>Quantity</th>
+                  <th>Unit</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="PurPOTbleBody">
+                <tr>
+                  <td width="25%">
+                    <select data-plugin-selecttwo class="form-control select2-js" id="productSelect1" onchange="updateUnit(1)" name="details[0][item_id]" required>  <!-- Added name attribute for form submission -->
+                      <option value="" selected disabled>Select Item</option>
+
+                    </select>  
+                  </td>
+                  <td><input type="number" name="details[0][width]"  id="item_width1" step="any" class="form-control" placeholder="Width" required/></td>
+                  <td><input type="text" name="details[0][description]"  id="item_description1" class="form-control" placeholder="Description"/></td>
+                  <td><input type="number" name="details[0][item_rate]"  id="item_rate1" onchange="rowTotal(1)" step="any" value="0" class="form-control" placeholder="Rate" required/></td>
+                  <td>
+                    <input type="number" name="details[0][item_qty]" id="item_qty1" onchange="rowTotal(1)" step="any" class="form-control" placeholder="Quantity" required/>
+                  </td>
+                  <td>
+                    <input type="text" id="unitSuffix1" class="form-control" placeholder="unit" disabled/>
+                  </td>
+                  <td><input type="number" id="item_total1" class="form-control" placeholder="Total" disabled/></td>
+                  <td>
+										<button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>
+                    <button type="button" class="btn btn-primary" onclick="addNewRow()" ><i class="fa fa-plus"></i></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <footer class="card-footer">
+            <div class="row">
+              <div class="col-12 col-md-2">
+                <label>Total Quantity</label>
+                <input type="number" class="form-control" id="total_qty" placeholder="Total Quantity" disabled/>
+              </div>
+              <div class="col-12 col-md-2">
+                <label>Total Amount</label>
+                <input type="number" class="form-control" id="total_amt" placeholder="Total Amount" disabled />
+              </div>
+              <div class="col-12 col-md-2">
+                <label>Other Expenses</label>
+                <input type="number" class="form-control" name="other_exp" id="other_exp" onchange="netTotal()" value=0 placeholder="Other Expenses" />
+              </div>
+              <div class="col-12 col-md-2">
+                <label>Bill Discount</label>
+                <input type="number" class="form-control" name="bill_discount" id="bill_disc" onchange="netTotal()" value=0 placeholder="Bill Discount"  />
+              </div>
+              <div class="col-12 pb-sm-3 pb-md-0 text-end">
+                <h3 class="font-weight-bold mt-3 mb-0 text-5 text-primary">Net Amount</h3>
+                <span>
+                  <strong class="text-4 text-primary">PKR <span id="netTotal" class="text-4 text-danger">0.00 </span></strong>
+                </span>
+              </div>
+            </div>
+          </footer>
+          <footer class="card-footer text-end">
+            <a class="btn btn-danger" href="{{ route('pur-pos.index') }}" >Discard</a>
+            <button type="submit" class="btn btn-primary">Create</button>
+          </footer>
+        </section>
+            
         </div>
     </div>
     <script>
