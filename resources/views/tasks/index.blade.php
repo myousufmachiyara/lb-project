@@ -104,13 +104,22 @@
                             <label>Category</label>
                             <select data-plugin-selecttwo class="form-control select2-js"  name="category_id">
                                 <option value="0" disabled selected>Select Category</option>
+                                @foreach ($category as $cat)
+                                    <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
+                                    {{ $cat->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-lg-6 mb-2">
                             <label>Status</label>
                             <select data-plugin-selecttwo class="form-control select2-js"  name="status_id">
                                 <option value="0" disabled selected>Select Status</option>
-                                
+                                @foreach ($status as $statuses)
+                                    <option value="{{ $statuses->id }}" {{ old('status_id') == $statuses->id ? 'selected' : '' }}>
+                                        {{ $statuses->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         
