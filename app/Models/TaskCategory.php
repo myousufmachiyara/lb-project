@@ -18,4 +18,9 @@ class TaskCategory extends Model
         // return $this->hasMany(Project::class, 'status_id');
         return $this->hasMany(Project::class);
     }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class, 'category_id');
+    }
 }
