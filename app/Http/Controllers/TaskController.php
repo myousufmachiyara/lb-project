@@ -3,17 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Models\TaskCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class TaskController extends Controller
 {
+    
     public function index()
     {
         try {
             $tasks = Task::with(['project', 'status', 'category', 'project.attachments'])->get();
-            return view('tasks.index', compact('tasks'));
+            $category = TaskCategory::all(); // Fetch all categories
+            return view('tasks.index', compact('tasks', 'category'));
         } catch (\Exception $e) {
             Log::error('Error fetching tasks: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to retrieve tasks.');
