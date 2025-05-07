@@ -12,7 +12,7 @@ class TaskController extends Controller
     public function index()
     {
         try {
-            $tasks = Task::all();
+            $tasks = Task::with(['project', 'status', 'category', 'project.attachments'])->get();
             return view('tasks.index', compact('tasks'));
         } catch (\Exception $e) {
             Log::error('Error fetching tasks: ' . $e->getMessage());

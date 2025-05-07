@@ -30,6 +30,7 @@
                     <thead>
                         <tr>
                             <th>S.NO</th>
+                            <th>Image</th>
                             <th>Title</th>
                             <th>Project</th>
                             <th>Category</th>
@@ -42,10 +43,27 @@
                         @foreach($tasks as $item)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    @php
+                                        $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
+                                            $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
+                                            return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+                                        });
+                                    @endphp
+
+                                    @if ($imageAttachment)
+                                        <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox="" data-plugin-options="{ &quot;type&quot;:&quot;image&quot; }" title="{{ $item->project->name ?? 'Project' }}">
+                                            <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                        </a>
+                                    @else
+                                        <span class="text-muted">No Image</span>
+                                    @endif
+                                </td>
+
                                 <td>{{ $item->task_name }}</td>
-                                <td>{{ ($item->project_id && $item->project_id != 0) ? $item->project_id : 'N/A' }}</td>
-                                <td>{{ ($item->category_id && $item->category_id != 0) ? $item->category_id : 'N/A' }}</td>
-                                <td>{{ ($item->status_id && $item->status_id != 0) ? $item->status_id : 'N/A' }}</td>
+                                <td>{{ $item->project->name ?? 'N/A' }}</td>
+                                <td>{{ $item->category->name ?? 'N/A' }}</td>
+                                <td>{{ $item->status->name ?? 'N/A' }}</td>
                                 <td>{{ $item->description ?? 'N/A' }}</td>
                                 <td>
                                     <a href="{{ route('tasks.edit', $item->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>

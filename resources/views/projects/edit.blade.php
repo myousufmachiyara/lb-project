@@ -5,36 +5,35 @@
 @section('content')
     <div class="row">
         <div class="col">
-            <section class="card">
-                @if (session('success'))
-                    <div class="alert alert-success">
-                        {{ session('success') }}
-                    </div>
-                @elseif (session('error'))
-                    <div class="alert alert-danger">
-                        {{ session('error') }}
-                    </div>
-                @endif
+            <form action="{{ route('projects.update', $project->id) }}" method="POST" enctype="multipart/form-data">
+                @csrf
+                @method('PUT')
+                <section class="card">
+                    @if (session('success'))
+                        <div class="alert alert-success">
+                            {{ session('success') }}
+                        </div>
+                    @elseif (session('error'))
+                        <div class="alert alert-danger">
+                            {{ session('error') }}
+                        </div>
+                    @endif
 
-                @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul class="mb-0">
-                            @foreach ($errors->all() as $error)
-                                <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endif
+                    @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul class="mb-0">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
 
-                <header class="card-header" style="display: flex; justify-content: space-between;">
-                    <h2 class="card-title">Edit Project</h2>
-                </header>
+                    <header class="card-header" style="display: flex; justify-content: space-between;">
+                        <h2 class="card-title">Edit Project</h2>
+                    </header>
 
-                <div class="card-body">
-                    <form action="{{ route('projects.update', $project->id) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        @method('PUT')
-
+                    <div class="card-body">
                         <div class="row">
                             <div class="col-12 col-md-3 mb-3">
                                 <label class="form-label">Project Name</label>
@@ -100,14 +99,80 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
+                </section>
+                @if ($project->tasks->count())
+                    <section class="card mt-4">
+                        <header class="card-header">
+                            <div style="display: flex;justify-content: space-between;">
+                                <h2 class="card-title">Project Task</h2>
+                            </div>
+                            @if ($errors->has('error'))
+                                <strong class="text-danger">{{ $errors->first('error') }}</strong>
+                            @endif
+                        </header>
 
-                        <footer class="card-footer text-end mt-2">
-                            <a class="btn btn-danger" href="{{ route('projects.index') }}">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Update</button>
-                        </footer>
-                    </form>
-                </div>
-            </section>
+                        <div class="card-body" style="max-height:400px; overflow-y:auto">
+                            <table class="table table-bordered" id="myTable">
+                                <thead>
+                                    <tr>
+                                        <th width="2%">Task</th>
+                                        <th>Description</th>
+                                        <th>Date</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ProjectTaskTable">
+                                    @foreach ($project->tasks as $i => $task)
+                                    <tr>
+                                        <input type="hidden" name="tasks[{{ $i }}][id]" value="{{ $task->id }}">
+                                        <td width="25%">
+                                            <input type="text" name="tasks[{{ $i }}][task_name]" class="form-control" placeholder="Task"
+                                                value="{{ $task->task_name }}" />
+                                        </td>
+                                        <td><input type="text" name="tasks[{{ $i }}][description]" class="form-control" placeholder="Description"
+                                                value="{{ $task->description }}" /></td>
+                                        <td><input type="date" name="tasks[{{ $i }}][due_date]" class="form-control"
+                                                value="{{ $task->due_date ? $task->due_date->format('Y-m-d') : '' }}" /></td>
+                                        <td>
+                                            <select data-plugin-selecttwo class="form-control select2-js" name="tasks[{{ $i }}][category_id]">
+                                                <option value="" selected disabled>Task Category</option>
+                                                @foreach ($taskCat as $cat)
+                                                    <option value="{{ $cat->id }}" {{ $task->category_id == $cat->id ? 'selected' : '' }}>
+                                                        {{ $cat->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select data-plugin-selecttwo class="form-control select2-js" name="tasks[{{ $i }}][status_id]">
+                                                <option value="" selected disabled>Task Status</option>
+                                                @foreach ($statuses as $status)
+                                                    <option value="{{ $status->id }}" {{ $task->status_id == $status->id ? 'selected' : '' }}>
+                                                        {{ $status->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>
+                                            <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+                                        </td>
+                                    </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                @endif
+                <footer class="card-footer text-end mt-2">
+                    <a class="btn btn-danger" href="{{ route('projects.index') }}">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </footer>
+
+            </form>
         </div>
     </div>
     <script>
@@ -161,5 +226,49 @@
             transition: opacity 0.3s ease-out;
         }
     </style>
+    <script>
+        let index = {{ count($project->tasks) }};
+
+        function removeRow(button) {
+            let tableRows = $("#ProjectTaskTable tr").length;
+            if (tableRows > 1) {
+                let row = button.parentNode.parentNode;
+                row.parentNode.removeChild(row);
+                index--;
+            }
+        }
+
+        function addNewRow() {
+            let lastRow = $('#ProjectTaskTable tr:last');
+            let latestValue = lastRow[0].cells[0].querySelector('input').value;
+
+            if (latestValue != "") {
+                let table = document.getElementById('myTable').getElementsByTagName('tbody')[0];
+                let newRow = table.insertRow(table.rows.length);
+
+                newRow.insertCell(0).innerHTML = '<input type="text" name="tasks['+index+'][task_name]" class="form-control" placeholder="Task Name" required/>';
+                newRow.insertCell(1).innerHTML = '<input type="text" name="tasks['+index+'][description]" class="form-control" placeholder="Description"/>';
+                newRow.insertCell(2).innerHTML = '<input type="date" name="tasks['+index+'][due_date]" class="form-control" />';
+                newRow.insertCell(3).innerHTML = `<select data-plugin-selecttwo class="form-control select2-js" name="tasks[${index}][category_id]">
+                    <option value="" disabled selected>Select Category</option>
+                    @foreach ($taskCat as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                    @endforeach
+                </select>`;
+                newRow.insertCell(4).innerHTML = `<select data-plugin-selecttwo class="form-control select2-js" name="tasks[${index}][status_id]">
+                    <option value="" disabled selected>Select Status</option>
+                    @foreach ($statuses as $status)
+                        <option value="{{ $status->id }}">{{ $status->name }}</option>
+                    @endforeach
+                </select>`;
+                newRow.insertCell(5).innerHTML = '<button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>' +
+                                                ' <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>';
+
+                index++;
+                $('#myTable select[data-plugin-selecttwo]').select2();
+            }
+        }
+    </script>
+
 @endsection
 

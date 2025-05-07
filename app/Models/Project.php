@@ -26,6 +26,11 @@ class Project extends Model
         return $this->belongsTo(ProjectStatus::class, 'status_id');
     }
 
+    public function tasks()
+    {
+        return $this->hasMany(Task::class)->orderBy('due_date');
+    }
+
     public function pcsInOut()
     {
         return $this->hasMany(ProjectPcsInOut::class, 'project_id');

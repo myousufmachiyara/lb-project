@@ -37,6 +37,46 @@
             </section>
         </div>
     </div>
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+            <section class="card">
+                <header class="card-header">
+                    <div class="card-actions">
+                        <a href="#" class="card-action card-action-toggle" data-card-toggle></a>
+                    </div>
+                    <h2 class="card-title">Todo List</h2>
+                </header>
+                <div class="card-body scrollable-div">
+                    <table class="table table-responsive-md table-striped mb-0">
+                        <thead class="sticky-tbl-header">
+                            <tr>
+                                <th>S.No</th>
+                                <th>Task</th>
+                                <th>Project</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($upcomingTasks as $index => $task)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $task->task_name }}</td>
+                                    <td>{{ $task->project->name ?? 'N/A' }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') }}</td>
+                                    <td>{{ $task->status->name ?? 'N/A' }}</td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">No upcoming tasks.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
     <script>
 
 		$(document).ready(function() {

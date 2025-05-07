@@ -25,12 +25,12 @@ class Task extends Model
     // Relationships
     public function category()
     {
-        return $this->belongsTo(Category::class);
+        return $this->belongsTo(TaskCategory::class);
     }
 
     public function status()
     {
-        return $this->belongsTo(Status::class);
+        return $this->belongsTo(ProjectStatus::class);
     }
 
     public function project()
