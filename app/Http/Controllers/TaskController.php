@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Task;
 use App\Models\TaskCategory;
 use App\Models\ProjectStatus;
+use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -18,8 +19,9 @@ class TaskController extends Controller
             $tasks = Task::with(['project', 'project.attachments'])->get();
             $category = TaskCategory::all(); // Fetch all categories
             $status = ProjectStatus::all(); // Fetch all categories
+            $project = Project::all(); // Fetch all categories
 
-            return view('tasks.index', compact('tasks', 'category', 'status'));
+            return view('tasks.index', compact('tasks', 'category', 'status' , 'project'));
         } catch (\Exception $e) {
             Log::error('Error fetching tasks: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to retrieve tasks.');
