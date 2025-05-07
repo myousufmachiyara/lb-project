@@ -19,9 +19,9 @@ class TaskController extends Controller
             $tasks = Task::with(['project', 'project.attachments'])->get();
             $category = TaskCategory::all(); // Fetch all categories
             $status = ProjectStatus::all(); // Fetch all categories
-            $project = Project::all(); // Fetch all categories
+            $projects = Project::all(); // Fetch all categories
 
-            return view('tasks.index', compact('tasks', 'category', 'status' , 'project'));
+            return view('tasks.index', compact('tasks', 'category', 'status' , 'projects'));
         } catch (\Exception $e) {
             Log::error('Error fetching tasks: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to retrieve tasks.');

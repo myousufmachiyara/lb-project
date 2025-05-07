@@ -127,6 +127,11 @@
                             <label>Project</label>
                             <select data-plugin-selecttwo class="form-control select2-js"  name="project_id">
                                 <option value="0" disabled selected>Select Project</option>
+                                @foreach ($projects as $project)
+                                    <option value="{{ $project->id }}" {{ old('project_id') == $project->id ? 'selected' : '' }}>
+                                        {{ $project->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
                         <div class="col-lg-6 mb-2">
