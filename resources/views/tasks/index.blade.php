@@ -104,7 +104,7 @@
                             <label>Category</label>
                             <select data-plugin-selecttwo class="form-control select2-js"  name="category_id">
                                 <option value="0" disabled selected>Select Category</option>
-                                @foreach ($category as $cat)
+                                @foreach ($cat as $cat)
                                     <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
                                     {{ $cat->name }}
                                     </option>
