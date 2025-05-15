@@ -76,53 +76,56 @@
             @endif
           </header>
           <div class="card-body" style="max-height:400px; overflow-y:auto">
-            <table class="table table-bordered" id="myTable">
-              <thead>
-                <tr>
-                  <th width="2%">Task</th>
-                  <th>Description</th>
-                  <th>Date</th>
-                  <th>Category</th>
-                  <th>Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody id="ProjectTaskTable">
-                <tr>
-                  <td width="25%">
-                    <input type="text" name="tasks[0][task_name]" class="form-control" placeholder="Task"/>
-                  </td>
-                  <td><input type="text" name="tasks[0][description]" class="form-control" placeholder="Description"/></td>
-                  <td><input type="date" name="tasks[0][due_date]" class="form-control" /></td>
-                  <td>
-                    <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][category_id]">  <!-- Added name attribute for form submission -->
-                      <option value="" selected disabled>Task Category</option>
-                      @foreach ($taskCat as $cat)
-                        <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
-                          {{ $cat->name }}
-                        </option>
-                      @endforeach
-                      
-                    </select>
-                  </td>
-                  <td>
-                    <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][status_id]">  <!-- Added name attribute for form submission -->
-                      <option value="" selected disabled>Task Status</option>
-                      @foreach ($statuses as $status)
-                        <option value="{{ $status->id }}" {{ old('status_id') == $status->id ? 'selected' : '' }}>
-                          {{ $status->name }}
-                        </option>
-                      @endforeach
-                    </select> 
-                  </td>
-                  <td>
-                    <button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>
-                    <button type="button" class="btn btn-primary" onclick="addNewRow()" ><i class="fa fa-plus"></i></button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+  <table class="table table-bordered" id="myTable">
+    <thead>
+      <tr>
+        <th width="2%">Task</th>
+        <th>Description</th>
+        <th>Date</th>
+        <th>Category</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="ProjectTaskTable">
+      <tr>
+        <td width="25%">
+          <input type="text" name="tasks[0][task_name]" class="form-control" placeholder="Task"/>
+        </td>
+        <td>
+          <input type="text" name="tasks[0][description]" class="form-control" placeholder="Description"/>
+        </td>
+        <td>
+          <input type="date" name="tasks[0][due_date]" class="form-control" />
+        </td>
+        <td>
+          <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][category_id]">
+            <option value="" selected disabled>Task Category</option>
+            @foreach ($taskCat as $cat)
+              <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
+                {{ $cat->name }}
+              </option>
+            @endforeach
+          </select>
+        </td>
+        <td>
+          <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][status_id]">
+            <option value="" selected disabled>Task Status</option>
+            @foreach ($statuses as $status)
+              <option value="{{ $status->id }}" {{ old('status_id') == $status->id ? 'selected' : '' }}>
+                {{ $status->name }}
+              </option>
+            @endforeach
+          </select> 
+        </td>
+        <td>
+          <button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>
+          <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
 
           <footer class="card-footer text-end mt-2">
             <a class="btn btn-danger" href="{{ route('projects.index') }}">Discard</a>
@@ -196,4 +199,24 @@
       $('#myTable select[data-plugin-selecttwo]').select2();
     }
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <script>
+    // Initialize Sortable
+    const sortable = new Sortable(document.getElementById('ProjectTaskTable'), {
+      animation: 150,
+      handle: 'td', // Optional: only allow dragging from cells
+      onEnd: function () {
+        // Log new order to console for now
+        const rows = document.querySelectorAll('#ProjectTaskTable tr');
+        rows.forEach((row, index) => {
+          console.log(`Row ${index + 1}:`, row);
+        });
+
+        // Optional: you could dynamically rename input names here if needed
+        // to maintain correct task indices (e.g., tasks[0], tasks[1], etc.)
+      }
+    });
+  </script>
+
 @endsection

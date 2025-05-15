@@ -32,5 +32,6 @@
 
 <!-- Theme Initialization Files -->
 <script src="{{ asset('/assets/js/theme.init.js') }}"></script>
+<script src="{{ asset('/assets/vendor/jquery-nestable/jquery.nestable.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@fingerprintjs/fingerprintjs@3/dist/fp.min.js"></script>
