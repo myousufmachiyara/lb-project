@@ -27,6 +27,44 @@ class TaskController extends Controller
             return redirect()->back()->with('error', 'Failed to retrieve tasks.');
         }
     }
+    
+public function store(Request $request)
+{
+    DB::beginTransaction();
+
+    try {
+        $validated = $request->validate([
+            'task_name'           => 'required|string|max:255',
+            'category_id'         => 'nullable|integer|exists:task_categories,id',
+            'status_id'           => 'nullable|integer|exists:project_statuses,id',
+            'project_id'          => 'nullable|integer|exists:projects,id',
+            'description'         => 'nullable|string',
+            'due_date'            => 'nullable|date',
+            'is_recurring'        => 'nullable|boolean',
+            'recurring_frequency' => 'nullable|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30',
+        ]);
+
+        // Checkbox handling: Laravel sends "0"/"1" as strings, so cast it to bool.
+        $validated['is_recurring'] = (bool) $request->input('is_recurring', false);
+
+        Task::create($validated);
+
+        DB::commit();
+
+        return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        DB::rollBack();
+        return redirect()->back()->withErrors($e->validator)->withInput();
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Error creating task', [
+            'message' => $e->getMessage(),
+            'data' => $request->all(),
+        ]);
+
+        return redirect()->back()->withInput()->with('error', 'Failed to create task.');
+    }
+}
 
     public function edit(Task $task)
     {
