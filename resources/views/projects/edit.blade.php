@@ -115,7 +115,7 @@
                         <table class="table table-bordered" id="myTable">
                             <thead>
                                 <tr>
-                                    <th width="2%">Task</th>
+                                    <th width="20%">Task</th>
                                     <th>Description</th>
                                     <th>Date</th>
                                     <th>Category</th>
