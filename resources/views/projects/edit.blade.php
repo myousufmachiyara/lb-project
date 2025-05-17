@@ -101,29 +101,29 @@
                         </div>
                     </div>
                 </section>
-                @if ($project->tasks->count())
-                    <section class="card mt-4">
-                        <header class="card-header">
-                            <div style="display: flex;justify-content: space-between;">
-                                <h2 class="card-title">Project Task</h2>
-                            </div>
-                            @if ($errors->has('error'))
-                                <strong class="text-danger">{{ $errors->first('error') }}</strong>
-                            @endif
-                        </header>
+                <section class="card mt-4">
+                    <header class="card-header">
+                        <div style="display: flex;justify-content: space-between;">
+                            <h2 class="card-title">Project Task</h2>
+                        </div>
+                        @if ($errors->has('error'))
+                            <strong class="text-danger">{{ $errors->first('error') }}</strong>
+                        @endif
+                    </header>
 
-                        <div class="card-body" style="max-height:400px; overflow-y:auto">
-                            <table class="table table-bordered" id="myTable">
-                                <thead>
-                                    <tr>
-                                        <th width="2%">Task</th>
-                                        <th>Description</th>
-                                        <th>Date</th>
-                                        <th>Category</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
+                    <div class="card-body" style="max-height:400px; overflow-y:auto">
+                        <table class="table table-bordered" id="myTable">
+                            <thead>
+                                <tr>
+                                    <th width="2%">Task</th>
+                                    <th>Description</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            @if ($project->tasks->count())
                                 <tbody id="ProjectTaskTable">
                                     @foreach ($project->tasks as $i => $task)
                                     <tr>
@@ -166,10 +166,46 @@
                                     </tr>
                                     @endforeach
                                 </tbody>
-                            </table>
-                        </div>
-                    </section>
-                @endif
+                            @elseif
+                                <tbody id="ProjectTaskTable">
+                                    <tr>
+                                        <td>
+                                            <input type="text" name="tasks[0][task_name]" class="form-control" placeholder="Task Name" required />
+                                            <input type="hidden" name="tasks[0][sort_order]" value="0" class="sort-order-field" />
+                                        </td>
+                                        <td>
+                                            <input type="text" name="tasks[0][description]" class="form-control" placeholder="Description" />
+                                        </td>
+                                        <td>
+                                            <input type="date" name="tasks[0][due_date]" class="form-control" />
+                                        </td>
+                                        <td>
+                                            <select class="form-control select2-js" name="tasks[0][category_id]">
+                                            <option value="" selected disabled>Task Category</option>
+                                            @foreach ($taskCat as $cat)
+                                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                            @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select class="form-control select2-js" name="tasks[0][status_id]">
+                                            <option value="" selected disabled>Task Status</option>
+                                            @foreach ($statuses as $status)
+                                                <option value="{{ $status->id }}">{{ $status->name }}</option>
+                                            @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <button type="button" onclick="removeRow(this)" class="btn btn-danger"><i class="fas fa-times"></i></button>
+                                            <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            @endif
+                        </table>
+                    </div>
+                </section>
+               
                 <footer class="card-footer text-end mt-2">
                     <a class="btn btn-danger" href="{{ route('projects.index') }}">Cancel</a>
                     <button type="submit" class="btn btn-primary">Update</button>
