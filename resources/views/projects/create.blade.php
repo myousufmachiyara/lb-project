@@ -76,56 +76,53 @@
             @endif
           </header>
           <div class="card-body" style="max-height:400px; overflow-y:auto">
-  <table class="table table-bordered" id="myTable">
-    <thead>
-      <tr>
-        <th width="2%">Task</th>
-        <th>Description</th>
-        <th>Date</th>
-        <th>Category</th>
-        <th>Status</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="ProjectTaskTable">
-      <tr>
-        <td width="25%">
-          <input type="text" name="tasks[0][task_name]" class="form-control" placeholder="Task"/>
-        </td>
-        <td>
-          <input type="text" name="tasks[0][description]" class="form-control" placeholder="Description"/>
-        </td>
-        <td>
-          <input type="date" name="tasks[0][due_date]" class="form-control" />
-        </td>
-        <td>
-          <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][category_id]">
-            <option value="" selected disabled>Task Category</option>
-            @foreach ($taskCat as $cat)
-              <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>
-                {{ $cat->name }}
-              </option>
-            @endforeach
-          </select>
-        </td>
-        <td>
-          <select data-plugin-selecttwo class="form-control select2-js" name="tasks[0][status_id]">
-            <option value="" selected disabled>Task Status</option>
-            @foreach ($statuses as $status)
-              <option value="{{ $status->id }}" {{ old('status_id') == $status->id ? 'selected' : '' }}>
-                {{ $status->name }}
-              </option>
-            @endforeach
-          </select> 
-        </td>
-        <td>
-          <button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>
-          <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+            <table class="table table-bordered" id="myTable">
+              <thead>
+                <tr>
+                  <th width="20%">Task</th>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th>Status</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ProjectTaskTable">
+                <tr>
+                  <td>
+                    <input type="text" name="tasks[0][task_name]" class="form-control" placeholder="Task Name" required />
+                    <input type="hidden" name="tasks[0][sort_order]" value="0" class="sort-order-field" />
+                  </td>
+                  <td>
+                    <input type="text" name="tasks[0][description]" class="form-control" placeholder="Description" />
+                  </td>
+                  <td>
+                    <input type="date" name="tasks[0][due_date]" class="form-control" />
+                  </td>
+                  <td>
+                    <select class="form-control select2-js" name="tasks[0][category_id]">
+                      <option value="" selected disabled>Task Category</option>
+                      @foreach ($taskCat as $cat)
+                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                      @endforeach
+                    </select>
+                  </td>
+                  <td>
+                    <select class="form-control select2-js" name="tasks[0][status_id]">
+                      <option value="" selected disabled>Task Status</option>
+                      @foreach ($statuses as $status)
+                        <option value="{{ $status->id }}">{{ $status->name }}</option>
+                      @endforeach
+                    </select>
+                  </td>
+                  <td>
+                    <button type="button" onclick="removeRow(this)" class="btn btn-danger"><i class="fas fa-times"></i></button>
+                    <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
           <footer class="card-footer text-end mt-2">
             <a class="btn btn-danger" href="{{ route('projects.index') }}">Discard</a>
@@ -135,6 +132,8 @@
       </form>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
   <script>
     function previewImages(event) {
         const preview = document.getElementById('preview-images');
@@ -154,69 +153,77 @@
 
     var index=2;
 
-    function removeRow(button) {
-      var tableRows = $("#ProjectTaskTable tr").length;
-      if(tableRows>1){
-        var row = button.parentNode.parentNode;
-        row.parentNode.removeChild(row);
-        index--;	
-      } 
+    function addNewRow() {
+    const lastRow = document.querySelector('#ProjectTaskTable tr:last-child');
+    const lastTaskName = lastRow.querySelector('input[name*="[task_name]"]').value;
+
+    if (!lastTaskName.trim()) {
+      alert("Please fill in the previous task before adding a new one.");
+      return;
     }
 
-    function addNewRow(){
-      var lastRow =  $('#ProjectTaskTable tr:last');
-      latestValue=lastRow[0].cells[0].querySelector('input').value;
+    const table = document.getElementById('ProjectTaskTable');
+    const row = table.insertRow();
 
-      if(latestValue!=""){
-        var table = document.getElementById('myTable').getElementsByTagName('tbody')[0];
-        var newRow = table.insertRow(table.rows.length);
+    row.innerHTML = `
+      <td>
+        <input type="text" name="tasks[${index}][task_name]" class="form-control" placeholder="Task Name" required />
+        <input type="hidden" name="tasks[${index}][sort_order]" value="${index}" class="sort-order-field" />
+      </td>
+      <td>
+        <input type="text" name="tasks[${index}][description]" class="form-control" placeholder="Description" />
+      </td>
+      <td>
+        <input type="date" name="tasks[${index}][due_date]" class="form-control" />
+      </td>
+      <td>
+        <select class="form-control select2-js" name="tasks[${index}][category_id]">
+          <option value="" selected disabled>Select Category</option>
+          @foreach ($taskCat as $cat)
+            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+          @endforeach
+        </select>
+      </td>
+      <td>
+        <select class="form-control select2-js" name="tasks[${index}][status_id]">
+          <option value="" selected disabled>Select Status</option>
+          @foreach ($statuses as $status)
+            <option value="{{ $status->id }}">{{ $status->name }}</option>
+          @endforeach
+        </select>
+      </td>
+      <td>
+        <button type="button" onclick="removeRow(this)" class="btn btn-danger"><i class="fas fa-times"></i></button>
+        <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+      </td>
+    `;
 
-        var cell1 = newRow.insertCell(0);
-        var cell2 = newRow.insertCell(1);
-        var cell3 = newRow.insertCell(2);
-        var cell4 = newRow.insertCell(3);
-        var cell5 = newRow.insertCell(4);
-        var cell6 = newRow.insertCell(5);
-        cell1.innerHTML  = '<input type="text" name="tasks['+index+'][task_name]" class="form-control" placeholder="Task Name" required/>';
-        cell2.innerHTML  = '<input type="text" name="tasks['+index+'][description]" class="form-control" placeholder="Description"/>';
-        cell3.innerHTML  = '<input type="date" name="tasks['+index+'][due_date]" class="form-control" />';
-        cell4.innerHTML  = '<select data-plugin-selecttwo class="form-control select2-js" name="tasks['+index+'][category_id]">'+
-                            '<option value="" disabled selected>Select Category</option>'+
-                            @foreach ($taskCat as $cat)
-                              '<option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>'+
-                            @endforeach
-                          '</select>';
-        cell5.innerHTML  = '<select data-plugin-selecttwo  class="form-control select2-js" name="tasks['+index+'][status_id]">'+
-                            '<option value="" disabled selected>Select Status</option>'+   
-                            @foreach ($statuses as $status)
-                              '<option value="{{ $status->id }}" {{ old('status_id') == $status->id ? 'selected' : '' }}>{{ $status->name }}</option>'+
-                            @endforeach            
-                          '</select>';
-        cell6.innerHTML  = '<button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button> '+
-                          '<button type="button" class="btn btn-primary" onclick="addNewRow()" ><i class="fa fa-plus"></i></button>';
-        index++;
-      }
-      $('#myTable select[data-plugin-selecttwo]').select2();
+    $('.select2-js').select2(); // re-init Select2
+    index++;
+  }
+
+  function removeRow(button) {
+    const tableRows = document.querySelectorAll('#ProjectTaskTable tr');
+    if (tableRows.length > 1) {
+      button.closest('tr').remove();
+      updateSortOrder(); // update sort orders after removal
     }
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  }
 
-  <script>
-    // Initialize Sortable
-    const sortable = new Sortable(document.getElementById('ProjectTaskTable'), {
-      animation: 150,
-      handle: 'td', // Optional: only allow dragging from cells
-      onEnd: function () {
-        // Log new order to console for now
-        const rows = document.querySelectorAll('#ProjectTaskTable tr');
-        rows.forEach((row, index) => {
-          console.log(`Row ${index + 1}:`, row);
-        });
-
-        // Optional: you could dynamically rename input names here if needed
-        // to maintain correct task indices (e.g., tasks[0], tasks[1], etc.)
-      }
+  function updateSortOrder() {
+    const rows = document.querySelectorAll('#ProjectTaskTable tr');
+    rows.forEach((row, i) => {
+      const hidden = row.querySelector('input.sort-order-field');
+      if (hidden) hidden.value = i;
     });
+  }
+
+  // Initialize Sortable
+  new Sortable(document.getElementById('ProjectTaskTable'), {
+    animation: 150,
+    onEnd: updateSortOrder,
+  });
+
   </script>
 
 @endsection

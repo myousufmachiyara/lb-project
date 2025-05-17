@@ -28,31 +28,10 @@ class TaskController extends Controller
         }
     }
 
-    public function store(Request $request)
+    public function edit(Task $task)
     {
-        DB::beginTransaction();
-
-        try {
-            $validated = $request->validate([
-                'task_name' => 'required|string|max:255',
-                'category_id' => 'nullable|integer',
-                'status_id' => 'nullable|integer',
-                'project_id' => 'nullable|integer',
-                'description' => 'nullable|string',
-                'due_date' => 'nullable|date',
-            ]);
-
-            Task::create($validated);
-
-            DB::commit();
-
-            return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error creating task: ' . $e->getMessage());
-            return redirect()->back()->withInput()->with('error', 'Failed to create task.');
-        }
-    }
+        return response()->json($task);
+    }   
 
     public function update(Request $request, $id)
     {
@@ -62,27 +41,30 @@ class TaskController extends Controller
             $task = Task::findOrFail($id);
 
             $validated = $request->validate([
-                'task_name' => 'required|string|max:255',
-                'category_id' => 'required|exists:categories,id',
-                'status_id' => 'required|exists:statuses,id',
-                'project_id' => 'required|exists:projects,id',
-                'description' => 'nullable|string',
-                'attachment' => 'nullable|file',
-                'date' => 'required|date',
+                'task_name'           => 'required|string|max:255',
+                'category_id'         => 'nullable|integer|exists:task_categories,id',
+                'status_id'           => 'nullable|integer|exists:project_statuses,id',
+                'project_id'          => 'nullable|integer|exists:projects,id',
+                'description'         => 'nullable|string',
+                'due_date'            => 'nullable|date',
+                'is_recurring'        => 'nullable|boolean',
+                'recurring_frequency' => 'nullable|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30',
             ]);
 
-            if ($request->hasFile('attachment')) {
-                $validated['attachment'] = $request->file('attachment')->store('attachments');
-            }
+            $validated['is_recurring'] = (bool) $request->input('is_recurring', false);
 
             $task->update($validated);
 
             DB::commit();
 
             return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating task: ' . $e->getMessage());
+
             return redirect()->back()->withInput()->with('error', 'Failed to update task.');
         }
     }

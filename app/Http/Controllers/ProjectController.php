@@ -45,8 +45,6 @@ class ProjectController extends Controller
 
     public function store(Request $request)
     {
-
-        // Validate the incoming data first
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -60,32 +58,30 @@ class ProjectController extends Controller
             'tasks.*.due_date' => 'nullable|date',
             'tasks.*.category_id' => 'nullable|exists:task_categories,id',
             'tasks.*.status_id' => 'nullable|exists:project_status,id',
+            'tasks.*.sort_order' => 'nullable|integer',
         ]);
-        Log::info('Validation passed', $validated);
 
         DB::beginTransaction();
-    
+
         try {
-            // Create the project
             $project = Project::create($validated);
-    
-            // Handle file uploads (attachments)
+
+            // Handle file uploads
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $extension = $file->getClientOriginalExtension();
                     $att_path = $this->projectDoc($file, $extension);
-    
+
                     ProjectAttachment::create([
                         'proj_id' => $project->id,
                         'att_path' => $att_path,
                     ]);
                 }
             }
-    
-            // Handle tasks if any valid task data exists
+
+            // Save tasks in sorted order
             if (!empty($validated['tasks'])) {
                 foreach ($validated['tasks'] as $taskData) {
-                    // Skip if task name is empty (just in case)
                     if (empty($taskData['task_name'])) continue;
 
                     Task::create([
@@ -95,43 +91,44 @@ class ProjectController extends Controller
                         'due_date' => $taskData['due_date'] ?? null,
                         'category_id' => $taskData['category_id'] ?? 0,
                         'status_id' => $taskData['status_id'] ?? 0,
+                        'sort_order' => $taskData['sort_order'] ?? 0,
                     ]);
                 }
             }
 
             DB::commit();
             return redirect()->route('projects.index')->with('success', 'Project created successfully.');
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             DB::rollBack();
-            dd($e); // or dd($e->getMessage(), $e->getTraceAsString());
-
-            // Optionally delete any files already stored if needed here
-    
-            Log::error('Failed to create project: ' . $e->getMessage());
+            Log::error('Project creation failed: ' . $e->getMessage());
             return redirect()->route('projects.index')->with('error', 'Failed to create project.');
         }
     }
-    
+
+
     public function edit($id)
     {
         try {
-            $project = Project::with(['attachments', 'status', 'tasks'])->findOrFail($id);
+            $project = Project::with([
+                'attachments',
+                'status',
+                'tasks' => function ($query) {
+                    $query->orderBy('sort_order', 'asc'); // 🟢 Sort tasks by sort_order
+                }
+            ])->findOrFail($id);
 
-            // Retrieve all statuses for the status dropdown
             $statuses = ProjectStatus::all();
             $taskCat = TaskCategory::all();
-
-            // Fetch existing attachment IDs (these will be kept by the user)
             $keptAttachmentIds = $project->attachments->pluck('id')->toArray();
 
-            // Return the edit view with necessary data
-            return view('projects.edit', compact('project', 'statuses', 'keptAttachmentIds','taskCat'));
+            return view('projects.edit', compact('project', 'statuses', 'keptAttachmentIds', 'taskCat'));
 
         } catch (Exception $e) {
             Log::error('Failed to load edit form: ' . $e->getMessage());
             return redirect()->route('projects.index')->with('error', 'Unable to load project.');
         }
     }
+
 
     public function pcsUpdate(Request $request, $id){
 
@@ -175,7 +172,7 @@ class ProjectController extends Controller
     public function update(Request $request, $id)
     {
         DB::beginTransaction();
-        
+
         try {
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
@@ -190,32 +187,30 @@ class ProjectController extends Controller
                 'tasks.*.due_date' => 'nullable|date',
                 'tasks.*.category_id' => 'nullable|exists:task_categories,id',
                 'tasks.*.status_id' => 'nullable|exists:project_status,id',
+                'tasks.*.sort_order' => 'nullable|integer',
             ]);
 
-            // Get the project
+            // Update project
             $project = Project::findOrFail($id);
-            $project->update($validated);
+            $project->update([
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+                'total_pcs' => $validated['total_pcs'],
+                'status_id' => $validated['status_id'],
+            ]);
 
-            // Get list of kept attachments from the request (comma-separated string)
-            $keptAttachments = $request->input('kept_attachments', '');  // Get the kept attachments as a comma-separated string
-            $keptIds = explode(',', $keptAttachments);  // Convert to an array of IDs
-
-            // Loop through all attachments and delete those not marked as "kept"
+            // Handle attachments
+            $keptIds = explode(',', $request->input('kept_attachments', ''));
             foreach ($project->attachments as $attachment) {
-                // Check if the attachment ID is in the list of kept IDs
                 if (!in_array($attachment->id, $keptIds)) {
-                    // Delete file from storage
                     $fullPath = public_path($attachment->att_path);
                     if (File::exists($fullPath)) {
                         File::delete($fullPath);
                     }
-
-                    // Delete DB record
                     $attachment->delete();
                 }
             }
 
-            // Upload new attachments
             if ($request->hasFile('attachments')) {
                 foreach ($request->file('attachments') as $file) {
                     $extension = $file->getClientOriginalExtension();
@@ -236,27 +231,21 @@ class ProjectController extends Controller
                 foreach ($validated['tasks'] as $taskData) {
                     if (empty($taskData['task_name'])) continue;
 
+                    $taskAttributes = [
+                        'task_name' => $taskData['task_name'],
+                        'description' => $taskData['description'] ?? null,
+                        'due_date' => $taskData['due_date'] ?? null,
+                        'category_id' => $taskData['category_id'] ?? 0,
+                        'status_id' => $taskData['status_id'] ?? 0,
+                        'sort_order' => $taskData['sort_order'] ?? 0, // ✅ Use the order directly
+                    ];
+
                     if (!empty($taskData['id'])) {
-                        // Update existing task
                         $task = Task::find($taskData['id']);
-                        $task->update([
-                            'task_name' => $taskData['task_name'],
-                            'description' => $taskData['description'] ?? null,
-                            'due_date' => $taskData['due_date'] ?? null,
-                            'category_id' => $taskData['category_id'] ?? 0,
-                            'status_id' => $taskData['status_id'] ?? 0,
-                        ]);
+                        $task->update($taskAttributes);
                         $submittedTaskIds[] = $task->id;
                     } else {
-                        // Create new task
-                        $task = Task::create([
-                            'project_id' => $project->id,
-                            'task_name' => $taskData['task_name'],
-                            'description' => $taskData['description'] ?? null,
-                            'due_date' => $taskData['due_date'] ?? null,
-                            'category_id' => $taskData['category_id'] ?? 0,
-                            'status_id' => $taskData['status_id'] ?? 0,
-                        ]);
+                        $task = Task::create(array_merge($taskAttributes, ['project_id' => $project->id]));
                         $submittedTaskIds[] = $task->id;
                     }
                 }
@@ -266,7 +255,6 @@ class ProjectController extends Controller
             $tasksToDelete = array_diff($existingTaskIds, $submittedTaskIds);
             Task::destroy($tasksToDelete);
 
-
             DB::commit();
             return redirect()->route('projects.index')->with('success', 'Project updated successfully.');
         } catch (\Exception $e) {
@@ -275,7 +263,7 @@ class ProjectController extends Controller
             return redirect()->route('projects.index')->with('error', 'Failed to update project.');
         }
     }
-
+   
     public function destroy($id)
     {
         try {

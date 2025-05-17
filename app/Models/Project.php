@@ -28,7 +28,7 @@ class Project extends Model
 
     public function tasks()
     {
-        return $this->hasMany(Task::class)->orderBy('due_date');
+        return $this->hasMany(Task::class)->orderBy('sort_order');
     }
 
     public function pcsInOut()

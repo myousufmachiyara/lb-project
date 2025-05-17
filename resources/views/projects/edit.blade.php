@@ -131,6 +131,9 @@
                                         <td width="25%">
                                             <input type="text" name="tasks[{{ $i }}][task_name]" class="form-control" placeholder="Task"
                                                 value="{{ $task->task_name }}" />
+                                            <input type="hidden" name="tasks[{{ $i }}][sort_order]" class="sort-order-field" value="{{ $task->sort_order ?? $i }}">
+
+
                                         </td>
                                         <td><input type="text" name="tasks[{{ $i }}][description]" class="form-control" placeholder="Description"
                                                 value="{{ $task->description }}" /></td>
@@ -175,30 +178,30 @@
             </form>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
-   document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.remove-attachment-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const wrapper = this.closest('.attachment-wrapper');
-            const attachmentId = wrapper.getAttribute('data-id');  // Get the ID of the attachment
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.remove-attachment-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const wrapper = this.closest('.attachment-wrapper');
+                    const attachmentId = wrapper.getAttribute('data-id');  // Get the ID of the attachment
 
-            // Remove the attachment visually (fade-out effect)
-            wrapper.classList.add('fade-out');
-            setTimeout(() => wrapper.remove(), 300);
+                    // Remove the attachment visually (fade-out effect)
+                    wrapper.classList.add('fade-out');
+                    setTimeout(() => wrapper.remove(), 300);
 
-            // Update the kept_attachments hidden input field
-            let keptAttachments = document.getElementById('keptAttachments').value;
-            keptAttachments = keptAttachments ? keptAttachments.split(',') : [];  // Convert the value to an array
+                    // Update the kept_attachments hidden input field
+                    let keptAttachments = document.getElementById('keptAttachments').value;
+                    keptAttachments = keptAttachments ? keptAttachments.split(',') : [];  // Convert the value to an array
 
-            // Remove the attachment ID from the list of kept attachments
-            keptAttachments = keptAttachments.filter(id => id !== attachmentId);
+                    // Remove the attachment ID from the list of kept attachments
+                    keptAttachments = keptAttachments.filter(id => id !== attachmentId);
 
-            // Update the hidden input value
-            document.getElementById('keptAttachments').value = keptAttachments.join(',');
+                    // Update the hidden input value
+                    document.getElementById('keptAttachments').value = keptAttachments.join(',');
+                });
+            });
         });
-    });
-});
-
 
         function compressImage(file) {
             const reader = new FileReader();
@@ -226,48 +229,91 @@
             transition: opacity 0.3s ease-out;
         }
     </style>
+
     <script>
-        let index = {{ count($project->tasks) }};
+        document.addEventListener('DOMContentLoaded', () => {
+            const taskTable = document.getElementById('ProjectTaskTable');
 
-        function removeRow(button) {
-            let tableRows = $("#ProjectTaskTable tr").length;
-            if (tableRows > 1) {
-                let row = button.parentNode.parentNode;
-                row.parentNode.removeChild(row);
-                index--;
+            // Enable sortable drag & drop
+            new Sortable(taskTable, {
+                animation: 150,
+                onEnd: updateSortOrderAndFieldNames
+            });
+
+            // ✅ This function updates both sort_order and input names
+            function updateSortOrderAndFieldNames() {
+                const rows = taskTable.querySelectorAll('tr');
+
+                rows.forEach((row, index) => {
+                    const sortInput = row.querySelector('input.sort-order-field');
+                    if (sortInput) sortInput.value = index;
+
+                    // Reindex all inputs/selects
+                    row.querySelectorAll('[name]').forEach(el => {
+                        el.name = el.name.replace(/tasks\[\d+]/, `tasks[${index}]`);
+                    });
+                });
             }
-        }
 
-        function addNewRow() {
-            let lastRow = $('#ProjectTaskTable tr:last');
-            let latestValue = lastRow[0].cells[0].querySelector('input').value;
-
-            if (latestValue != "") {
-                let table = document.getElementById('myTable').getElementsByTagName('tbody')[0];
-                let newRow = table.insertRow(table.rows.length);
-
-                newRow.insertCell(0).innerHTML = '<input type="text" name="tasks['+index+'][task_name]" class="form-control" placeholder="Task Name" required/>';
-                newRow.insertCell(1).innerHTML = '<input type="text" name="tasks['+index+'][description]" class="form-control" placeholder="Description"/>';
-                newRow.insertCell(2).innerHTML = '<input type="date" name="tasks['+index+'][due_date]" class="form-control" />';
-                newRow.insertCell(3).innerHTML = `<select data-plugin-selecttwo class="form-control select2-js" name="tasks[${index}][category_id]">
-                    <option value="" disabled selected>Select Category</option>
-                    @foreach ($taskCat as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                    @endforeach
-                </select>`;
-                newRow.insertCell(4).innerHTML = `<select data-plugin-selecttwo class="form-control select2-js" name="tasks[${index}][status_id]">
-                    <option value="" disabled selected>Select Status</option>
-                    @foreach ($statuses as $status)
-                        <option value="{{ $status->id }}">{{ $status->name }}</option>
-                    @endforeach
-                </select>`;
-                newRow.insertCell(5).innerHTML = '<button type="button" onclick="removeRow(this)" class="btn btn-danger" tabindex="1"><i class="fas fa-times"></i></button>' +
-                                                ' <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>';
-
-                index++;
-                $('#myTable select[data-plugin-selecttwo]').select2();
+            // ✅ Remove row and reindex
+            window.removeRow = function (button) {
+                let tableRows = document.querySelectorAll("#ProjectTaskTable tr").length;
+                if (tableRows > 1) {
+                    let row = button.closest('tr');
+                    row.remove();
+                    updateSortOrderAndFieldNames();
+                }
             }
-        }
+
+            // ✅ Add new row and reindex
+            window.addNewRow = function () {
+                const tableBody = document.getElementById('ProjectTaskTable');
+                const lastRow = tableBody.querySelector('tr:last-child');
+                const lastTaskName = lastRow.querySelector('input[name*="[task_name]"]').value;
+
+                if (lastTaskName.trim() !== "") {
+                    const newIndex = tableBody.querySelectorAll('tr').length;
+
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>
+                            <input type="text" name="tasks[${newIndex}][task_name]" class="form-control" placeholder="Task Name" required>
+                            <input type="hidden" name="tasks[${newIndex}][sort_order]" class="sort-order-field" value="${newIndex}">
+                        </td>
+                        <td>
+                            <input type="text" name="tasks[${newIndex}][description]" class="form-control" placeholder="Description">
+                        </td>
+                        <td>
+                            <input type="date" name="tasks[${newIndex}][due_date]" class="form-control">
+                        </td>
+                        <td>
+                            <select class="form-control select2-js" name="tasks[${newIndex}][category_id]">
+                                <option value="" disabled selected>Select Category</option>
+                                @foreach ($taskCat as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <select class="form-control select2-js" name="tasks[${newIndex}][status_id]">
+                                <option value="" disabled selected>Select Status</option>
+                                @foreach ($statuses as $status)
+                                    <option value="{{ $status->id }}">{{ $status->name }}</option>
+                                @endforeach
+                            </select>
+                        </td>
+                        <td>
+                            <button type="button" onclick="removeRow(this)" class="btn btn-danger"><i class="fas fa-times"></i></button>
+                            <button type="button" class="btn btn-primary" onclick="addNewRow()"><i class="fa fa-plus"></i></button>
+                        </td>
+                    `;
+
+                    tableBody.appendChild(newRow);
+                    $('.select2-js').select2(); // Re-init Select2
+                    updateSortOrderAndFieldNames(); // ✅ Critical
+                }
+            }
+        });
     </script>
 
 @endsection

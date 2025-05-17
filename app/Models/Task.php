@@ -16,6 +16,9 @@ class Task extends Model
         'project_id',
         'description',
         'due_date',
+        'sort_order',  
+        'is_recurring',         
+        'recurring_frequency', 
     ];
 
     protected $casts = [

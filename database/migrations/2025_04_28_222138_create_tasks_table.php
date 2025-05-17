@@ -16,6 +16,9 @@ return new class extends Migration
             $table->unsignedBigInteger('category_id')->default(0);
             $table->unsignedBigInteger('status_id')->default(0);
             $table->text('description')->nullable();
+            $table->integer('sort_order')->default(0);
+            $table->boolean('is_recurring')->default(false);
+            $table->string('recurring_frequency')->nullable();
             $table->timestamps();
         });
     }
