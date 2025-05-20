@@ -50,6 +50,41 @@ class TaskController extends Controller
         }
     }
     
+    public function filter(Request $request)
+    {
+        $filterDate = $request->input('date') ?? now()->toDateString();
+
+        $tasks = Task::query()
+            ->with(['project', 'project.attachments'])
+            ->select('*')
+            ->selectRaw("
+                CASE
+                    WHEN is_recurring = 1 AND last_completed_at IS NOT NULL
+                        THEN DATE_ADD(last_completed_at, INTERVAL recurring_frequency DAY)
+                    WHEN is_recurring = 1 AND last_completed_at IS NULL
+                        THEN due_date
+                    ELSE due_date
+                END as next_due_date,
+                CASE
+                    WHEN (
+                        (is_recurring = 1 AND last_completed_at IS NOT NULL AND DATE_ADD(last_completed_at, INTERVAL recurring_frequency DAY) <= ?)
+                        OR (is_recurring = 1 AND last_completed_at IS NULL AND due_date <= ?)
+                        OR (is_recurring = 0 AND last_completed_at IS NULL AND due_date <= ?)
+                    ) THEN 1
+                    ELSE 0
+                END as is_due
+            ", [$filterDate, $filterDate, $filterDate])
+            ->havingRaw('DATE(next_due_date) = ?', [$filterDate]) // Only tasks due on this exact date
+            ->orderBy('next_due_date', 'asc')
+            ->get();
+
+        $category = TaskCategory::all();
+        $status = ProjectStatus::all();
+        $projects = Project::all();
+
+        return view('tasks.index', compact('tasks', 'category', 'status', 'projects'));
+    }
+
     public function store(Request $request)
     {
         DB::beginTransaction();

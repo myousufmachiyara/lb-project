@@ -23,9 +23,21 @@
                 </div>
             </div>
         </header>
-       
+
         <div class="card-body">
-          <div class="modal-wrapper table-scroll">
+            <form method="GET" action="{{ route('tasks.filter') }}" class="mb-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="date">Filter by Date:</label>
+                        <input type="date" name="date" id="date" class="form-control" value="{{ request('date', date('Y-m-d')) }}">
+                    </div>
+
+                    <div class="col-md-1 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">Filter</button>
+                    </div>
+                </div>
+            </form>
+            <div class="modal-wrapper table-scroll">
                 <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                     <thead>
                         <tr>

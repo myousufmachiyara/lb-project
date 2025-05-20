@@ -41,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('task-categories', TaskCategoryController::class);
     Route::get('task-categories/{id}/json', [TaskCategoryController::class, 'showJson'])->name('task-category.show-json');
 
+    Route::get('/tasks/filter', [TaskController::class, 'filter'])->name('tasks.filter');
     Route::resource('tasks', TaskController::class);
     Route::post('/tasks/{id}/complete', [TaskController::class, 'markComplete'])->name('tasks.complete');
 });
