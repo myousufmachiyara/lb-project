@@ -42,4 +42,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('task-categories/{id}/json', [TaskCategoryController::class, 'showJson'])->name('task-category.show-json');
 
     Route::resource('tasks', TaskController::class);
+    Route::post('/tasks/{id}/complete', [TaskController::class, 'markComplete'])->name('tasks.complete');
 });

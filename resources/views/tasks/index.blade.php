@@ -34,6 +34,7 @@
                             <th>Title</th>
                             <th>Project</th>
                             <th>Repeat</th>
+                            <th>Next Due</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Description</th>
@@ -70,10 +71,28 @@
                                         <span class="badge bg-secondary">No</span>
                                     @endif
                                 </td>
+                                <td>{{ \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') }}</td>
                                 <td>{{ $item->category->name ?? 'N/A' }}</td>
-                                <td>{{ $item->status->name ?? 'N/A' }}</td>
+                                <td>
+                                    @if($item->last_completed_at && !$item->is_recurring)
+                                        <span class="badge bg-success">Completed</span>
+                                    @elseif($item->is_recurring && $item->last_completed_at &&
+                                        now()->diffInDays($item->last_completed_at) < $item->recurring_frequency)
+                                        <span class="badge bg-success">Completed</span>
+                                    @else
+                                        <span class="badge bg-warning">Pending</span>
+                                    @endif
+                                </td>                                
                                 <td>{{ $item->description ?? 'N/A' }}</td>
                                 <td>
+                                    @if(!$item->last_completed_at || ($item->is_recurring && now()->diffInDays($item->last_completed_at) >= $item->recurring_frequency))
+                                        <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
+                                            @csrf
+                                            <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
+                                                <i class="fa fa-check"></i>
+                                            </button>
+                                        </form>
+                                    @endif                                    
                                     <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $item->id }}"><i class="fa fa-edit"></i></a>
                                     <form action="{{ route('tasks.destroy', $item->id) }}" method="POST" style="display:inline;">
                                         @csrf

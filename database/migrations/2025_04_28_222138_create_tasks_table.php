@@ -18,7 +18,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->integer('sort_order')->default(0);
             $table->boolean('is_recurring')->default(false);
-            $table->string('recurring_frequency')->nullable();
+            $table->string('recurring_frequency')->nullable(); // Still OK as string, though integer is better
+            $table->date('last_completed_at')->nullable(); // ✅ New column for tracking completion
             $table->timestamps();
         });
     }

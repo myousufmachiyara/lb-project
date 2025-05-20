@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Task extends Model
 {
-    protected $table = 'tasks';
+    use HasFactory;
 
     protected $fillable = [
         'task_name',
@@ -16,16 +16,18 @@ class Task extends Model
         'project_id',
         'description',
         'due_date',
-        'sort_order',  
-        'is_recurring',         
-        'recurring_frequency', 
+        'sort_order',
+        'is_recurring',
+        'recurring_frequency',
+        'last_completed_at',
     ];
 
     protected $casts = [
-        'date' => 'date',
+        'due_date' => 'date',
+        'last_completed_at' => 'date',
+        'is_recurring' => 'boolean',
     ];
 
-    // Relationships
     public function category()
     {
         return $this->belongsTo(TaskCategory::class);
