@@ -18,7 +18,9 @@ class ProjectController extends Controller
     {
         try {
             $projects = Project::with(['attachments', 'status', 'pcsInOut'])->get();
-            return view('projects.index', compact('projects'));
+            $statuses = ProjectStatus::all(); // For bulk status dropdown
+
+            return view('projects.index', compact('projects', 'statuses'));
         } catch (Exception $e) {
             Log::error('Failed to load projects: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Unable to load projects.');
@@ -264,6 +266,42 @@ class ProjectController extends Controller
         }
     }
    
+    public function bulkStatusUpdate(Request $request)
+    {
+        $request->validate([
+            'project_ids' => 'required|array',
+            'project_ids.*' => 'exists:projects,id',
+            'status_id' => 'required|exists:project_status,id',
+        ]);
+
+        Project::whereIn('id', $request->project_ids)->update(['status_id' => $request->status_id]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'project_ids' => 'required|array',
+            'project_ids.*' => 'exists:projects,id',
+        ]);
+
+        foreach ($request->project_ids as $id) {
+            $project = Project::find($id);
+            foreach ($project->attachments as $attachment) {
+                $fullPath = public_path($attachment->att_path);
+                if (File::exists($fullPath)) File::delete($fullPath);
+                $attachment->delete();
+            }
+
+            $project->tasks()->delete();
+            $project->pcsInOut()->delete();
+            $project->delete();
+        }
+
+        return response()->json(['success' => true]);
+    }
+
     public function destroy($id)
     {
         try {

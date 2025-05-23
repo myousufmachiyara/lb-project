@@ -36,6 +36,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('project-pcs-update/{id}', [ProjectController::class, 'pcsUpdate'])->name('project-pcs-update');
     Route::get('project-pcs-show/{id}', [ProjectController::class, 'getPcs'])->name('project-pcs-show');
     Route::delete('project-pcs-delete/{id}', [ProjectController::class, 'deletePcs'])->name('project-pcs-delete');
+    Route::post('/projects/bulk-status-update', [ProjectController::class, 'bulkStatusUpdate'])->name('projects.bulk-status-update');
+    Route::post('/projects/bulk-delete', [ProjectController::class, 'bulkDelete'])->name('projects.bulk-delete');
 
     // Task
     Route::resource('task-categories', TaskCategoryController::class);

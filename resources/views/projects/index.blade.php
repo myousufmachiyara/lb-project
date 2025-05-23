@@ -22,7 +22,7 @@
                     </div>
                 </header>
                 <div class="card-body">
-                    <div>
+                    <div class="row">
                         <div class="col-md-5" style="display:flex;">
                             <select class="form-control" style="margin-right:10px" id="columnSelect">
                                 <option selected disabled>Search by</option>
@@ -31,11 +31,22 @@
                             </select>
                             <input type="text" class="form-control" id="columnSearch" placeholder="Search By Column"/>
                         </div>
+                        <div class="col-md-5 mb-3">
+                            <select id="bulk-status-select" class="form-select" style="width:auto; display:inline-block;">
+                                <option disabled selected>Update Status</option>
+                                @foreach($statuses as $status)
+                                    <option value="{{ $status->id }}">{{ $status->name }}</option>
+                                @endforeach
+                            </select>
+                            <button class="btn btn-success" id="bulk-status-update">Update</button>
+                            <button class="btn btn-danger" id="bulk-delete">Delete</button>
+                        </div>
                     </div>
                     <div class="modal-wrapper table-scroll">
                         <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                             <thead>
                                 <tr>
+                                    <th><input type="checkbox" id="select-all"></th>
                                     <th>S.No</th>
                                     <th>Image</th>
                                     <th>Name</th>
@@ -47,6 +58,9 @@
                             <tbody>
                                 @foreach($projects as $project)
                                 <tr>
+                                    <td>
+                                        <input type="checkbox" class="project-checkbox" name="project_ids[]" value="{{ $project->id }}">
+                                    </td>
                                     <td>{{ $loop->iteration }}</td>
                                     <td>
                                         @php
@@ -296,6 +310,56 @@
             }
         });
 
-    
+        $('#select-all').on('click', function () {
+            $('.project-checkbox').prop('checked', this.checked);
+        });
+
+        $('#bulk-status-update').on('click', function () {
+            const ids = $('.project-checkbox:checked').map(function () {
+                return this.value;
+            }).get();
+
+            const statusId = $('#bulk-status-select').val();
+
+            if (!ids.length || !statusId) {
+                alert('Select projects and a status first.');
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('projects.bulk-status-update') }}",
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    project_ids: ids,
+                    status_id: statusId
+                },
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
+
+        $('#bulk-delete').on('click', function () {
+            const ids = $('.project-checkbox:checked').map(function () {
+                return this.value;
+            }).get();
+
+            if (!ids.length || !confirm('Are you sure you want to delete selected projects?')) {
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('projects.bulk-delete') }}",
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    project_ids: ids
+                },
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
     </script>
 @endsection
