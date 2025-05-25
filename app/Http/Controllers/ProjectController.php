@@ -18,10 +18,21 @@ class ProjectController extends Controller
     {
         try {
             $projects = Project::with(['attachments', 'status', 'pcsInOut'])->get();
-            $statuses = ProjectStatus::all(); // For bulk status dropdown
+
+            // Sort projects by custom status order: Assigned → In Progress → Completed
+            $projects = $projects->sortBy(function ($project) {
+                return match ($project->status_id) {
+                    1 => 0, // Assigned
+                    2 => 1, // In Progress
+                    3 => 2, // Completed
+                    default => 3, // Unknown/other statuses last
+                };
+            })->values(); // Reindex
+
+            $statuses = ProjectStatus::all();
 
             return view('projects.index', compact('projects', 'statuses'));
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Log::error('Failed to load projects: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Unable to load projects.');
         }
@@ -53,7 +64,6 @@ class ProjectController extends Controller
             'total_pcs' => 'required|integer|min:1',
             'status_id' => 'required|exists:project_status,id',
             'attachments.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
-
             'tasks' => 'nullable|array|min:1',
             'tasks.*.task_name' => 'nullable|string|max:255',
             'tasks.*.description' => 'nullable|string|max:1000',

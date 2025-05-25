@@ -17,26 +17,54 @@ class TaskController extends Controller
     {
         try {
             $today = now()->startOfDay();
+            $tomorrow = $today->copy()->addDay();
+            $tasks = Task::with(['project.attachments', 'category'])
+            ->get()
+            ->map(function ($task) use ($today, $tomorrow) {
+                // Compute next due date
+                if ($task->due_date === null) {
+                    $task->next_due_date = null;
+                } elseif ($task->is_recurring && $task->last_completed_at) {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency);
+                } else {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
+                }
 
-            $tasks = Task::with(['project', 'project.attachments'])
-                ->select('*', DB::raw("
-                    CASE
-                        WHEN is_recurring = 1 AND last_completed_at IS NOT NULL THEN DATE_ADD(last_completed_at, INTERVAL recurring_frequency DAY)
-                        WHEN is_recurring = 1 AND last_completed_at IS NULL THEN due_date
-                        ELSE due_date
-                    END as next_due_date,
-                    CASE
-                        WHEN (
-                            (is_recurring = 1 AND last_completed_at IS NOT NULL AND DATE_ADD(last_completed_at, INTERVAL recurring_frequency DAY) <= '$today')
-                            OR (is_recurring = 1 AND last_completed_at IS NULL AND due_date <= '$today')
-                            OR (is_recurring = 0 AND last_completed_at IS NULL AND due_date <= '$today')
-                        ) THEN 1
-                        ELSE 0
-                    END as is_due
-                "))
-                ->orderByDesc('is_due') // Show due tasks first
-                ->orderBy('next_due_date', 'asc') // Then by due date
-                ->get();
+                // Determine custom status
+                if ($task->last_completed_at && !$task->is_recurring) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->is_recurring && $task->last_completed_at &&
+                    now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->next_due_date === null) {
+                    $task->custom_status = 'Unscheduled';
+                } elseif ($task->next_due_date->lt($today)) {
+                    $task->custom_status = 'Due';
+                } elseif ($task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->next_due_date->gte($tomorrow)) {
+                    $task->custom_status = 'Scheduled';
+                }
+
+                return $task;
+            })
+            ->sortBy(function ($task) {
+                // Assign a sort weight to each status
+                return match ($task->custom_status) {
+                    'Due' => 0,
+                    'In Progress' => 1,
+                    'Assigned' => 2,
+                    'Unassigned' => 3,
+                    'Completed' => 4,
+                    default => 5,
+                };
+            })
+            ->sortBy(function ($task) {
+                // Sort by date within the same status group (except completed)
+                if ($task->custom_status === 'Completed') return PHP_INT_MAX;
+                return $task->next_due_date?->timestamp ?? PHP_INT_MAX - 1;
+            })
+            ->values();
 
             $category = TaskCategory::all();
             $status = ProjectStatus::all();
@@ -49,7 +77,7 @@ class TaskController extends Controller
             return redirect()->back()->with('error', 'Failed to retrieve tasks.');
         }
     }
-    
+
     public function filter(Request $request)
     {
         $filterDate = $request->input('date') ?? now()->toDateString();
@@ -93,7 +121,7 @@ class TaskController extends Controller
             $validated = $request->validate([
                 'task_name'           => 'required|string|max:255',
                 'category_id'         => 'nullable|integer|exists:task_categories,id',
-                'status_id'           => 'nullable|integer|exists:project_statuses,id',
+                'status_id'           => 'nullable|integer|exists:project_status,id',
                 'project_id'          => 'nullable|integer|exists:projects,id',
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',
@@ -126,10 +154,42 @@ class TaskController extends Controller
     public function markComplete($id)
     {
         $task = Task::findOrFail($id);
-        $task->last_completed_at = now();
-        $task->save();
 
-        return redirect()->back()->with('success', 'Task marked as complete.');
+        DB::beginTransaction();
+
+        try {
+            // Mark the current task as complete
+            $task->last_completed_at = now();
+            $task->status_id = 3; // Completed
+            $task->save();
+
+            // If this task belongs to a project
+            if ($task->project_id) {
+                // Find the next task in the project based on sort_order
+                $nextTask = Task::where('project_id', $task->project_id)
+                    ->where('sort_order', '>', $task->sort_order)
+                    ->orderBy('sort_order', 'asc')
+                    ->first();
+
+                if ($nextTask) {
+                    // Set due_date only if not already set
+                    if ($nextTask->due_date === null) {
+                        $nextTask->due_date = now()->toDateString();
+                    }
+
+                    $nextTask->status_id = 1; // Assigned/In Progress
+                    $nextTask->save();
+                }
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Task marked as complete.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error completing task: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to mark task as complete.');
+        }
     }
 
     public function edit(Task $task)
@@ -147,7 +207,7 @@ class TaskController extends Controller
             $validated = $request->validate([
                 'task_name'           => 'required|string|max:255',
                 'category_id'         => 'nullable|integer|exists:task_categories,id',
-                'status_id'           => 'nullable|integer|exists:project_statuses,id',
+                'status_id'           => 'nullable|integer|exists:project_status,id',
                 'project_id'          => 'nullable|integer|exists:projects,id',
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',

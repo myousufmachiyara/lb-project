@@ -25,7 +25,7 @@
         </header>
 
         <div class="card-body">
-            <form method="GET" action="{{ route('tasks.filter') }}" class="mb-3">
+            <!-- <form method="GET" action="{{ route('tasks.filter') }}" class="mb-3">
                 <div class="row">
                     <div class="col-md-3">
                         <label for="date">Filter by Date:</label>
@@ -36,7 +36,7 @@
                         <button type="submit" class="btn btn-primary w-100">Filter</button>
                     </div>
                 </div>
-            </form>
+            </form> -->
             <div class="modal-wrapper table-scroll">
                 <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                     <thead>
@@ -83,18 +83,22 @@
                                         <span class="badge bg-secondary">No</span>
                                     @endif
                                 </td>
-                                <td>{{ \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') }}</td>
+                                <td>
+                                {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') : 'N/A' }}
+                                </td>
                                 <td>{{ $item->category->name ?? 'N/A' }}</td>
                                 <td>
-                                    @if($item->last_completed_at && !$item->is_recurring)
-                                        <span class="badge bg-success">Completed</span>
-                                    @elseif($item->is_recurring && $item->last_completed_at &&
-                                        now()->diffInDays($item->last_completed_at) < $item->recurring_frequency)
-                                        <span class="badge bg-success">Completed</span>
-                                    @else
-                                        <span class="badge bg-warning">Pending</span>
-                                    @endif
-                                </td>                                
+                                    <span class="badge 
+                                        @if($item->custom_status === 'Due') bg-danger
+                                        @elseif($item->custom_status === 'In Progress') bg-warning
+                                        @elseif($item->custom_status === 'Scheduled') bg-primary
+                                        @elseif($item->custom_status === 'Unscheduled') bg-secondary
+                                        @elseif($item->custom_status === 'Completed') bg-success
+                                        @else bg-info @endif">
+                                        {{ $item->custom_status }}
+                                    </span>
+                                </td>
+                              
                                 <td>{{ $item->description ?? 'N/A' }}</td>
                                 <td>
                                     @if(!$item->last_completed_at || ($item->is_recurring && now()->diffInDays($item->last_completed_at) >= $item->recurring_frequency))
@@ -294,15 +298,29 @@
     </div>
   </div>
   <script>
+    $(document).ready(function(){
+        var table = $('#cust-datatable-default').DataTable(
+            {
+                "pageLength": 100,  // Show all rows
+            }
+        );
+    });
+
     $('.edit-task-btn').on('click', function () {
         var taskId = $(this).data('id');
         $.ajax({
             url: `/tasks/${taskId}/edit`,
             type: 'GET',
             success: function (response) {
+                console.log(response);
                 $('#edit_task_id').val(response.id);
                 $('#edit_task_name').val(response.task_name);
-                $('#edit_due_date').val(response.due_date);
+                if (response.due_date) {
+                    const formattedDate = new Date(response.due_date).toISOString().split('T')[0];
+                    $('#edit_due_date').val(formattedDate);
+                } else {
+                    $('#edit_due_date').val('');
+                }                
                 $('#edit_description').val(response.description);
                 $('#edit_category_id').val(response.category_id).trigger('change');
                 $('#edit_status_id').val(response.status_id).trigger('change');

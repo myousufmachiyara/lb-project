@@ -23,16 +23,18 @@
                 </header>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-5" style="display:flex;">
+                        <div class="col-md-3">
                             <select class="form-control" style="margin-right:10px" id="columnSelect">
                                 <option selected disabled>Search by</option>
                                 <option value="2">by Name</option>
                                 <option value="4">by Status</option>
                             </select>
+                        </div>
+                        <div class="col-md-3">
                             <input type="text" class="form-control" id="columnSearch" placeholder="Search By Column"/>
                         </div>
-                        <div class="col-md-5 mb-3">
-                            <select id="bulk-status-select" class="form-select" style="width:auto; display:inline-block;">
+                        <div class="col-md-6 mb-3 text-end">
+                            <select id="bulk-status-select" class="form-control" style="width:auto; display:inline-block;">
                                 <option disabled selected>Update Status</option>
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->id }}">{{ $status->name }}</option>
@@ -128,7 +130,7 @@
                                 </div>
                                 <div class="col-12 col-md-6 mb-2">
                                     <label>Type<span style="color: red;"><strong>*</strong></span></label>
-                                    <select name="type" class="form-select" required>
+                                    <select name="type" class="form-control" required>
                                         <option value="" disabled selected>-- Select Type --</option>
                                         <option value="in">Add (In)</option>
                                         <option value="out">Subtract (Out)</option>

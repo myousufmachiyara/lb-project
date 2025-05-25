@@ -81,7 +81,7 @@
                 <tr>
                   <th width="20%">Task</th>
                   <th>Description</th>
-                  <th>Date</th>
+                  <th>Due Date</th>
                   <th>Category</th>
                   <th>Status</th>
                   <th></th>
