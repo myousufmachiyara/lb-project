@@ -194,7 +194,6 @@
         $(document).ready(function(){
             var table = $('#cust-datatable-default').DataTable(
                 {
-                    "order": [[4, "desc"]],
                     "pageLength": 100,  // Show all rows
                 }
             );
