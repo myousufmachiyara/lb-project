@@ -25,6 +25,10 @@
         </header>
 
         <div class="card-body">
+            <div class="col-md-12 text-end mb-3">
+                <button class="btn btn-success" id="bulk-complete">Bulk Complete</button>
+                <button class="btn btn-danger" id="bulk-delete-tasks">Bulk Delete</button>
+            </div>
             <!-- <form method="GET" action="{{ route('tasks.filter') }}" class="mb-3">
                 <div class="row">
                     <div class="col-md-3">
@@ -41,12 +45,13 @@
                 <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="select-all-tasks"></th>
                             <th>S.NO</th>
                             <th>Image</th>
                             <th>Title</th>
                             <th>Project</th>
                             <th>Repeat</th>
-                            <th>Next Due</th>
+                            <th>Due Date</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Description</th>
@@ -56,6 +61,7 @@
                     <tbody>
                         @foreach($tasks as $item)
                             <tr>
+                                <td><input type="checkbox" class="task-checkbox" name="task_ids[]" value="{{ $item->id }}"></td>
                                 <td>{{ $loop->iteration }}</td>
                                 <td>
                                     @php
@@ -304,6 +310,51 @@
                 "pageLength": 100,  // Show all rows
             }
         );
+
+        $('#bulk-complete').on('click', function () {
+            const ids = $('.task-checkbox:checked').map(function () {
+                return this.value;
+            }).get();
+
+            if (!ids.length) {
+                alert('Select tasks first.');
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('tasks.bulk-complete') }}",
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    task_ids: ids
+                },
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
+
+        $('#bulk-delete-tasks').on('click', function () {
+            const ids = $('.task-checkbox:checked').map(function () {
+                return this.value;
+            }).get();
+
+            if (!ids.length || !confirm('Are you sure you want to delete selected tasks?')) {
+                return;
+            }
+
+            $.ajax({
+                url: "{{ route('tasks.bulk-delete') }}",
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    task_ids: ids
+                },
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
     });
 
     $('.edit-task-btn').on('click', function () {
@@ -344,5 +395,10 @@
             }
         });
     });
+
+    $('#select-all-tasks').on('click', function () {
+        $('.task-checkbox').prop('checked', this.checked);
+    });
+
   </script>
 @endsection

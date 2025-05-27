@@ -46,4 +46,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tasks/filter', [TaskController::class, 'filter'])->name('tasks.filter');
     Route::resource('tasks', TaskController::class);
     Route::post('/tasks/{id}/complete', [TaskController::class, 'markComplete'])->name('tasks.complete');
+    Route::post('/tasks/bulk-complete', [TaskController::class, 'bulkComplete'])->name('tasks.bulk-complete');
+    Route::post('/tasks/bulk-delete', [TaskController::class, 'bulkDelete'])->name('tasks.bulk-delete');
 });

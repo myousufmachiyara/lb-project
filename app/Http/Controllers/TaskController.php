@@ -158,37 +158,46 @@ class TaskController extends Controller
         DB::beginTransaction();
 
         try {
-            // Mark the current task as complete
-            $task->last_completed_at = now();
-            $task->status_id = 3; // Completed
-            $task->save();
+            if ($task->is_recurring) {
+                // Handle recurring task: update last completed and reschedule
+                $frequency = $task->recurring_frequency ?? 1; // Default to 1 if null
 
-            // If this task belongs to a project
-            if ($task->project_id) {
-                // Find the next task in the project based on sort_order
-                $nextTask = Task::where('project_id', $task->project_id)
-                    ->where('sort_order', '>', $task->sort_order)
-                    ->orderBy('sort_order', 'asc')
-                    ->first();
+                $task->last_completed_at = now();
+                $task->due_date = now()->addDays($frequency)->toDateString();
 
-                if ($nextTask) {
-                    // Set due_date only if not already set
-                    if ($nextTask->due_date === null) {
-                        $nextTask->due_date = now()->toDateString();
+                // Do not change the status to complete
+                $task->save();
+            } else {
+                // Non-recurring: mark as complete
+                $task->last_completed_at = now();
+                $task->status_id = 3; // Completed
+                $task->save();
+
+                // Handle project task flow
+                if ($task->project_id) {
+                    $nextTask = Task::where('project_id', $task->project_id)
+                        ->where('sort_order', '>', $task->sort_order)
+                        ->orderBy('sort_order', 'asc')
+                        ->first();
+
+                    if ($nextTask) {
+                        if ($nextTask->due_date === null) {
+                            $nextTask->due_date = now()->toDateString();
+                        }
+
+                        $nextTask->status_id = 1; // Assigned/In Progress
+                        $nextTask->save();
                     }
-
-                    $nextTask->status_id = 1; // Assigned/In Progress
-                    $nextTask->save();
                 }
             }
 
             DB::commit();
 
-            return redirect()->back()->with('success', 'Task marked as complete.');
+            return redirect()->back()->with('success', 'Task processed successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Error completing task: " . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to mark task as complete.');
+            return redirect()->back()->with('error', 'Failed to process task.');
         }
     }
 
@@ -253,4 +262,54 @@ class TaskController extends Controller
             return redirect()->back()->with('error', 'Failed to delete task.');
         }
     }
+
+    public function bulkComplete(Request $request)
+    {
+        try {
+            $taskIds = $request->input('task_ids', []);
+
+            if (empty($taskIds)) {
+                return response()->json(['message' => 'No tasks selected.'], 400);
+            }
+
+            // Get all selected tasks
+            $tasks = Task::whereIn('id', $taskIds)->get();
+
+            foreach ($tasks as $task) {
+                $task->status_id = 3;
+                $task->last_completed_at = now()->toDateString();
+
+                if ($task->is_recurring && (int)$task->recurring_frequency > 0) {
+                    $task->due_date = now()->addDays((int)$task->recurring_frequency)->toDateString();
+                }
+
+                $task->save();
+            }
+
+            return response()->json(['message' => 'Tasks marked as complete.']);
+        } catch (\Exception $e) {
+            \Log::error('Bulk complete error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Error completing tasks.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'task_ids' => 'required|array',
+            'task_ids.*' => 'exists:tasks,id',
+        ]);
+
+        try {
+            Task::whereIn('id', $request->task_ids)->delete();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            \Log::error("Bulk delete failed: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to delete tasks.'], 500);
+        }
+    }
+
 }
