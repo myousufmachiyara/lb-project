@@ -13,31 +13,27 @@ use Illuminate\Support\Facades\Log;
 class TaskController extends Controller
 {
     
-    public function index()
-    {
-        try {
-            $today = now()->startOfDay();
-            $tomorrow = $today->copy()->addDay();
-            $tasks = Task::with(['project.attachments', 'category'])
-            ->get()
-            ->map(function ($task) use ($today, $tomorrow) {
-                // Compute next due date
-                if ($task->due_date === null) {
-                    $task->next_due_date = null;
-                } elseif ($task->is_recurring && $task->last_completed_at) {
-                    $task->next_due_date = \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency);
-                } else {
-                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
-                }
+public function index()
+{
+    try {
+        $today = now()->startOfDay();
+        $tomorrow = $today->copy()->addDay();
 
-                // Determine custom status
-               if ($task->is_recurring) {
-                    // Recaxlculate next_due_date for recurring tasks
+        $tasks = Task::with(['project.attachments', 'category'])
+            ->get()
+            ->map(function ($task) use ($today) {
+                // Compute next due date for recurring tasks
+                if ($task->is_recurring) {
                     $task->next_due_date = $task->last_completed_at
                         ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
                         : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
+                } elseif ($task->due_date) {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
+                } else {
+                    $task->next_due_date = null;
                 }
 
+                // Determine custom status
                 if (!$task->is_recurring && $task->last_completed_at) {
                     $task->custom_status = 'Completed';
                 } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
@@ -52,6 +48,8 @@ class TaskController extends Controller
                     $task->custom_status = 'In Progress';
                 } elseif ($task->next_due_date->gte($tomorrow)) {
                     $task->custom_status = 'Scheduled';
+                } else {
+                    $task->custom_status = 'Unassigned';
                 }
 
                 return $task;
@@ -61,30 +59,34 @@ class TaskController extends Controller
                 return match ($task->custom_status) {
                     'Due' => 0,
                     'In Progress' => 1,
-                    'Assigned' => 2,
-                    'Unassigned' => 3,
-                    'Completed' => 4,
+                    'Scheduled' => 2,
+                    'Completed' => 3,
+                    'Unscheduled' => 4,
                     default => 5,
                 };
             })
             ->sortBy(function ($task) {
-                // Sort by date within the same status group (except completed)
-                if ($task->custom_status === 'Completed') return PHP_INT_MAX;
-                return $task->next_due_date?->timestamp ?? PHP_INT_MAX - 1;
+                // Sort within status by due date
+                return $task->next_due_date?->timestamp ?? PHP_INT_MAX;
+            })
+            ->sortBy(function ($task) {
+                // Sort within same due date by due time
+                return $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
             })
             ->values();
 
-            $category = TaskCategory::all();
-            $status = ProjectStatus::all();
-            $projects = Project::all();
+        $category = TaskCategory::all();
+        $status = ProjectStatus::all();
+        $projects = Project::all();
 
-            return view('tasks.index', compact('tasks', 'category', 'status', 'projects'));
+        return view('tasks.index', compact('tasks', 'category', 'status', 'projects'));
 
-        } catch (\Exception $e) {
-            \Log::error('Error fetching tasks: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to retrieve tasks.');
-        }
+    } catch (\Exception $e) {
+        \Log::error('Error fetching tasks: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
+}
+
 
     public function filter(Request $request)
     {
