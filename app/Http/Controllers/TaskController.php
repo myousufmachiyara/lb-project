@@ -22,7 +22,7 @@ public function index()
         $tasks = Task::with(['project.attachments', 'category'])
             ->get()
             ->map(function ($task) use ($today) {
-                // Compute next due date for recurring tasks
+                // Compute next due date
                 if ($task->is_recurring) {
                     $task->next_due_date = $task->last_completed_at
                         ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
@@ -55,23 +55,24 @@ public function index()
                 return $task;
             })
             ->sortBy(function ($task) {
-                // Assign a sort weight to each status
-                return match ($task->custom_status) {
+                // Primary: custom status order
+                $statusOrder = [
                     'Due' => 0,
                     'In Progress' => 1,
                     'Scheduled' => 2,
                     'Completed' => 3,
                     'Unscheduled' => 4,
-                    default => 5,
-                };
-            })
-            ->sortBy(function ($task) {
-                // Sort within status by due date
-                return $task->next_due_date?->timestamp ?? PHP_INT_MAX;
-            })
-            ->sortBy(function ($task) {
-                // Sort within same due date by due time
-                return $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+                    'Unassigned' => 5
+                ];
+                $statusWeight = $statusOrder[$task->custom_status] ?? 99;
+
+                // Secondary: due date timestamp (or far future if missing)
+                $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
+
+                // Tertiary: time in seconds (or far future if missing)
+                $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+
+                return [$statusWeight, $dueTimestamp, $timeValue];
             })
             ->values();
 
