@@ -209,7 +209,7 @@
                         </div>
                         <div class="col-lg-6 mb-2">
                             <label>Description</label>
-                            <textarea type="text" class="form-control" rows="2" placeholder="Description" name="description"></textarea>
+                            <textarea type="text" class="form-control" rows="4" placeholder="Description" name="description"></textarea>
                         </div>
                     </div>
                 </div>
@@ -294,7 +294,7 @@
                             </div>
                             <div class="col-lg-6 mb-2">
                                 <label>Description</label>
-                                <textarea class="form-control" rows="2" id="edit_description" name="description"></textarea>
+                                <textarea class="form-control" rows="4" id="edit_description" name="description"></textarea>
                             </div>
                            
                         </div>
@@ -321,13 +321,13 @@
             }
         );
 
-    const textareas = document.getElementsByTagName('textarea');
-    for (let i = 0; i < textareas.length; i++) {
-      textareas[i].addEventListener('keydown', function(e) {
-        console.log(`Key pressed: ${e.key}`);
-        console.log('Default prevented?', e.defaultPrevented);
-      });
-    }
+        const textareas = document.getElementsByTagName('textarea');
+        for (let i = 0; i < textareas.length; i++) {
+        textareas[i].addEventListener('keydown', function(e) {
+            console.log(`Key pressed: ${e.key}`);
+            console.log('Default prevented?', e.defaultPrevented);
+        });
+        }
 
         $('#bulk-complete').on('click', function () {
             const ids = $('.task-checkbox:checked').map(function () {
