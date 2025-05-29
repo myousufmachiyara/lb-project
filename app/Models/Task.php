@@ -16,6 +16,7 @@ class Task extends Model
         'project_id',
         'description',
         'due_date',
+        'due_time',
         'sort_order',
         'is_recurring',
         'recurring_frequency',

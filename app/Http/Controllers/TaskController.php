@@ -133,8 +133,9 @@ class TaskController extends Controller
                 'project_id'          => 'nullable|integer|exists:projects,id',
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',
+                'due_time'            => 'nullable|date_format:H:i',
                 'is_recurring'        => 'nullable|boolean',
-                'recurring_frequency' => 'nullable|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30',
+                'recurring_frequency' => 'nullable|integer|between:1,30',
             ]);
 
             // Checkbox handling: Laravel sends "0"/"1" as strings, so cast it to bool.
@@ -228,8 +229,9 @@ class TaskController extends Controller
                 'project_id'          => 'nullable|integer|exists:projects,id',
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',
+                'due_time'            => 'nullable|date_format:H:i',
                 'is_recurring'        => 'nullable|boolean',
-                'recurring_frequency' => 'nullable|in:1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30',
+                'recurring_frequency' => 'nullable|integer|between:1,30',
             ]);
 
             $validated['is_recurring'] = (bool) $request->input('is_recurring', false);

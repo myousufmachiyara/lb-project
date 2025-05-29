@@ -51,7 +51,7 @@
                             <th>Title</th>
                             <th>Project</th>
                             <th>Repeat</th>
-                            <th>Due Date</th>
+                            <th>Due Date / Time</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Description</th>
@@ -90,7 +90,7 @@
                                     @endif
                                 </td>
                                 <td>
-                                {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') : 'N/A' }}
+                                {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') : 'N/A' }} / {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('H:i') : 'N/A' }}
                                 </td>
                                 <td>{{ $item->category->name ?? 'N/A' }}</td>
                                 <td>
@@ -165,6 +165,10 @@
                         <div class="col-lg-6 mb-2">
                             <label>Due Date</label>
                             <input type="date" class="form-control" placeholder="Date" name="due_date" value="<?php echo date('Y-m-d'); ?>">
+                        </div>
+                        <div class="col-lg-6 mb-2">
+                            <label>Time</label>
+                            <input type="time" class="form-control" placeholder="Time" name="due_time" value="{{ now()->format('H:i') }}">
                         </div>  
                         <div class="col-lg-6 mb-2">
                             <label>Category</label>
@@ -254,6 +258,10 @@
                                 <label>Due Date</label>
                                 <input type="date" class="form-control" name="due_date" id="edit_due_date">
                             </div>
+                            <div class="col-lg-6 mb-2">
+                                <label>Time</label>
+                                <input type="time" class="form-control" name="due_time" id="edit_due_time">
+                            </div>  
                             <div class="col-lg-6 mb-2">
                                 <label>Category</label>
                                 <select class="form-control select2-js" id="edit_category_id" name="category_id">
@@ -370,7 +378,15 @@
                     $('#edit_due_date').val(formattedDate);
                 } else {
                     $('#edit_due_date').val('');
-                }                
+                }  
+                if (response.due_time) {
+                    // Keep only HH:MM part (in case seconds are included)
+                    const timeParts = response.due_time.split(':');
+                    const formattedTime = timeParts[0].padStart(2, '0') + ':' + timeParts[1].padStart(2, '0');
+                    $('#edit_due_time').val(formattedTime);
+                } else {
+                    $('#edit_due_time').val('');
+                }                 
                 $('#edit_description').val(response.description);
                 $('#edit_category_id').val(response.category_id).trigger('change');
                 $('#edit_status_id').val(response.status_id).trigger('change');

@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('task_name');
             $table->date('due_date')->nullable();
+            $table->time('due_time')->nullable();
             $table->unsignedBigInteger('project_id')->default(0);
             $table->unsignedBigInteger('category_id')->default(0);
             $table->unsignedBigInteger('status_id')->default(0);
