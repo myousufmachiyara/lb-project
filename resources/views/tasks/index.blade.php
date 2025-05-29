@@ -90,7 +90,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') : 'N/A' }} / {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('H:i') : 'N/A' }}
+                                    {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('Y-m-d') : 'N/A' }} / 
+                                    {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('g:i A') : 'N/A' }}                                
                                 </td>
                                 <td>{{ $item->category->name ?? 'N/A' }}</td>
                                 <td>
