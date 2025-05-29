@@ -17,11 +17,11 @@ public function index()
 {
     try {
         $today = now()->startOfDay();
-        $tomorrow = $today->copy()->addDay();
+        $tomorrow = $today->copy()->addDay(); // Ensure this is defined before map()
 
         $tasks = Task::with(['project.attachments', 'category'])
             ->get()
-            ->map(function ($task) use ($today) {
+            ->map(function ($task) use ($today, $tomorrow) { // Add $tomorrow here
                 // Compute next due date
                 if ($task->is_recurring) {
                     $task->next_due_date = $task->last_completed_at
@@ -55,7 +55,6 @@ public function index()
                 return $task;
             })
             ->sortBy(function ($task) {
-                // Primary: custom status order
                 $statusOrder = [
                     'Due' => 0,
                     'In Progress' => 1,
@@ -65,11 +64,7 @@ public function index()
                     'Unassigned' => 5
                 ];
                 $statusWeight = $statusOrder[$task->custom_status] ?? 99;
-
-                // Secondary: due date timestamp (or far future if missing)
                 $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
-
-                // Tertiary: time in seconds (or far future if missing)
                 $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
 
                 return [$statusWeight, $dueTimestamp, $timeValue];
@@ -80,13 +75,14 @@ public function index()
         $status = ProjectStatus::all();
         $projects = Project::all();
 
-        return view('tasks.index', compact('tasks', 'category', 'status', 'projects','tomorrow'));
+        return view('tasks.index', compact('tasks', 'category', 'status', 'projects', 'tomorrow'));
 
     } catch (\Exception $e) {
         \Log::error('Error fetching tasks: ' . $e->getMessage());
         return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
 }
+
 
 
     public function filter(Request $request)
