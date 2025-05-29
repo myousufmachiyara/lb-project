@@ -41,7 +41,7 @@
                     </div>
                 </div>
             </form> -->
-            <div class="modal-wrapper table-scroll">
+            <div class="modal-wrapper table-scroll" style="overflow-x: auto;">
                 <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                     <thead>
                         <tr>
