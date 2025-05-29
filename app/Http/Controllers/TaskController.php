@@ -18,60 +18,61 @@ class TaskController extends Controller
         try {
             $today = now()->startOfDay();
             $tomorrow = $today->copy()->addDay();
-
             $tasks = Task::with(['project.attachments', 'category'])
-                ->get()
-                ->map(function ($task) use ($today) {
-                    // Compute next due date for recurring tasks
-                    if ($task->is_recurring) {
-                        $task->next_due_date = $task->last_completed_at
-                            ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
-                            : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
-                    } elseif ($task->due_date) {
-                        $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
-                    } else {
-                        $task->next_due_date = null;
-                    }
+            ->get()
+            ->map(function ($task) use ($today, $tomorrow) {
+                // Compute next due date
+                if ($task->due_date === null) {
+                    $task->next_due_date = null;
+                } elseif ($task->is_recurring && $task->last_completed_at) {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency);
+                } else {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
+                }
 
-                    // Determine custom status
-                    if (!$task->is_recurring && $task->last_completed_at) {
-                        $task->custom_status = 'Completed';
-                    } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
-                        $task->custom_status = 'In Progress';
-                    } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
-                        $task->custom_status = 'Completed';
-                    } elseif ($task->next_due_date === null) {
-                        $task->custom_status = 'Unscheduled';
-                    } elseif ($task->next_due_date->lt($today)) {
-                        $task->custom_status = 'Due';
-                    } elseif ($task->next_due_date->eq($today)) {
-                        $task->custom_status = 'In Progress';
-                    } elseif ($task->next_due_date->gte($tomorrow)) {
-                        $task->custom_status = 'Scheduled';
-                    } else {
-                        $task->custom_status = 'Unassigned';
-                    }
+                // Determine custom status
+               if ($task->is_recurring) {
+                    // Recaxlculate next_due_date for recurring tasks
+                    $task->next_due_date = $task->last_completed_at
+                        ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
+                        : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
+                }
 
-                    return $task;
-                })
-                ->sortBy(function ($task) {
-                    // Sort by custom status
-                    return match ($task->custom_status) {
-                        'Due' => 0,
-                        'In Progress' => 1,
-                        'Assigned' => 2,
-                        'Unassigned' => 3,
-                        'Completed' => 4,
-                        default => 5,
-                    };
-                })
-                ->sortBy(function ($task) {
-                    // Sort by date and time
-                    $dateScore = $task->next_due_date?->timestamp ?? PHP_INT_MAX - 1;
-                    $timeScore = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
-                    return $dateScore + ($timeScore / 100000);
-                })
-                ->values();
+                if (!$task->is_recurring && $task->last_completed_at) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->next_due_date === null) {
+                    $task->custom_status = 'Unscheduled';
+                } elseif ($task->next_due_date->lt($today)) {
+                    $task->custom_status = 'Due';
+                } elseif ($task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->next_due_date->gte($tomorrow)) {
+                    $task->custom_status = 'Scheduled';
+                }
+
+                return $task;
+            })
+            ->sortBy(function ($task) {
+                // Assign a sort weight to each status
+                return match ($task->custom_status) {
+                    'Due' => 0,
+                    'In Progress' => 1,
+                    'Assigned' => 2,
+                    'Unassigned' => 3,
+                    'Completed' => 4,
+                    default => 5,
+                };
+            })
+            ->sortBy(function ($task) {
+                // Sort by date within the same status group (except completed)
+                if ($task->custom_status === 'Completed') return PHP_INT_MAX;
+                return $task->next_due_date?->timestamp ?? PHP_INT_MAX - 1;
+            })
+            ->values();
 
             $category = TaskCategory::all();
             $status = ProjectStatus::all();
