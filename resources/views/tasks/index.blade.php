@@ -321,6 +321,14 @@
             }
         );
 
+        const textareas = document.getElementsByTagName('textarea');
+
+        for (let i = 0; i < textareas.length; i++) {
+        textareas[i].addEventListener('keydown', function(e) {
+            console.log(`Key pressed in textarea[${i}]:`, e.key);
+        });
+        }
+
         $('#bulk-complete').on('click', function () {
             const ids = $('.task-checkbox:checked').map(function () {
                 return this.value;
