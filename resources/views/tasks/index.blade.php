@@ -321,14 +321,6 @@
             }
         );
 
-        const textareas = document.getElementsByTagName('textarea');
-        for (let i = 0; i < textareas.length; i++) {
-        textareas[i].addEventListener('keydown', function(e) {
-            console.log(`Key pressed: ${e.key}`);
-            console.log('Default prevented?', e.defaultPrevented);
-        });
-        }
-
         $('#bulk-complete').on('click', function () {
             const ids = $('.task-checkbox:checked').map(function () {
                 return this.value;
