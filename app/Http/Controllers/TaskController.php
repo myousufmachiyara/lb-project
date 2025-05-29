@@ -31,10 +31,18 @@ class TaskController extends Controller
                 }
 
                 // Determine custom status
-                if ($task->last_completed_at && !$task->is_recurring) {
+               if ($task->is_recurring) {
+                    // Recaxlculate next_due_date for recurring tasks
+                    $task->next_due_date = $task->last_completed_at
+                        ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
+                        : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
+                }
+
+                if (!$task->is_recurring && $task->last_completed_at) {
                     $task->custom_status = 'Completed';
-                } elseif ($task->is_recurring && $task->last_completed_at &&
-                    now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
                     $task->custom_status = 'Completed';
                 } elseif ($task->next_due_date === null) {
                     $task->custom_status = 'Unscheduled';

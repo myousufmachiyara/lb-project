@@ -107,8 +107,7 @@
                               
                                 <td>{{ $item->description ?? 'N/A' }}</td>
                                 <td>
-                                    @if(!$item->last_completed_at || ($item->is_recurring && now()->diffInDays($item->last_completed_at) >= $item->recurring_frequency))
-                                        <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
+                                    @if(!$item->last_completed_at || ($item->is_recurring && isset($item->next_due_date) && \Carbon\Carbon::parse($item->next_due_date)->lte(\Carbon\Carbon::today())))                                        <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
                                             @csrf
                                             <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
                                                 <i class="fa fa-check"></i>
@@ -128,7 +127,7 @@
                         @endforeach
                     </tbody>
                 </table>
-          </div>
+            </div>
         </div>
       </section>
 
