@@ -171,7 +171,7 @@
                         </div>
                         <div class="col-lg-6 mb-2">
                             <label>Time</label>
-                            <input type="time" class="form-control" placeholder="Time" name="due_time" value="{{ now()->format('H:i') }}">
+                            <input type="time" class="form-control" placeholder="Time" name="due_time">
                         </div>  
                         <div class="col-lg-6 mb-2">
                             <label>Category</label>
