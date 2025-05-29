@@ -51,7 +51,7 @@
                             <th>Title</th>
                             <th>Project</th>
                             <th>Repeat</th>
-                            <th>Due Date / Time</th>
+                            <th>Date / Time</th>
                             <th>Category</th>
                             <th>Status</th>
                             <th>Description</th>
