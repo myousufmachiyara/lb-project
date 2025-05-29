@@ -80,7 +80,7 @@ public function index()
         $status = ProjectStatus::all();
         $projects = Project::all();
 
-        return view('tasks.index', compact('tasks', 'category', 'status', 'projects'));
+        return view('tasks.index', compact('tasks', 'category', 'status', 'projects','tomorrow'));
 
     } catch (\Exception $e) {
         \Log::error('Error fetching tasks: ' . $e->getMessage());
