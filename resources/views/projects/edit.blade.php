@@ -183,7 +183,7 @@
                                             <input type="date" name="tasks[0][due_date]" class="form-control" />
                                         </td>
                                         <td>
-                                            <input type="date" name="tasks[0][due_time]" class="form-control" />
+                                            <input type="time" name="tasks[0][due_time]" class="form-control" />
                                         </td>
                                         <td>
                                             <select class="form-control select2-js" name="tasks[0][category_id]">
