@@ -118,6 +118,7 @@
                                     <th width="20%">Task</th>
                                     <th>Description</th>
                                     <th>Date</th>
+                                    <th>Time</th>
                                     <th>Category</th>
                                     <th>Status</th>
                                     <th></th>
@@ -132,13 +133,15 @@
                                             <input type="text" name="tasks[{{ $i }}][task_name]" class="form-control" placeholder="Task"
                                                 value="{{ $task->task_name }}" />
                                             <input type="hidden" name="tasks[{{ $i }}][sort_order]" class="sort-order-field" value="{{ $task->sort_order ?? $i }}">
-
-
                                         </td>
                                         <td><input type="text" name="tasks[{{ $i }}][description]" class="form-control" placeholder="Description"
                                                 value="{{ $task->description }}" /></td>
                                         <td><input type="date" name="tasks[{{ $i }}][due_date]" class="form-control"
                                                 value="{{ $task->due_date ? $task->due_date->format('Y-m-d') : '' }}" /></td>
+                                        <td>
+                                            <input type="time" name="tasks[{{ $i }}][due_time]" class="form-control"
+                                                value="{{ $task->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $task->due_time)->format('H:i') : '' }}" />
+                                        </td>
                                         <td>
                                             <select data-plugin-selecttwo class="form-control select2-js" name="tasks[{{ $i }}][category_id]">
                                                 <option value="" selected disabled>Task Category</option>
@@ -178,6 +181,9 @@
                                         </td>
                                         <td>
                                             <input type="date" name="tasks[0][due_date]" class="form-control" />
+                                        </td>
+                                        <td>
+                                            <input type="date" name="tasks[0][due_time]" class="form-control" />
                                         </td>
                                         <td>
                                             <select class="form-control select2-js" name="tasks[0][category_id]">
@@ -321,6 +327,9 @@
                         </td>
                         <td>
                             <input type="date" name="tasks[${newIndex}][due_date]" class="form-control">
+                        </td>
+                        <td>
+                            <input type="date" name="tasks[${newIndex}][due_time]" class="form-control">
                         </td>
                         <td>
                             <select class="form-control select2-js" name="tasks[${newIndex}][category_id]">

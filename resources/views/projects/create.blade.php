@@ -82,6 +82,7 @@
                   <th width="20%">Task</th>
                   <th>Description</th>
                   <th>Due Date</th>
+                  <th>Due Time</th>
                   <th>Category</th>
                   <th>Status</th>
                   <th></th>
@@ -98,6 +99,9 @@
                   </td>
                   <td>
                     <input type="date" name="tasks[0][due_date]" class="form-control" />
+                  </td>
+                  <td>
+                    <input type="time" name="tasks[0][due_time]" class="form-control" />
                   </td>
                   <td>
                     <select class="form-control select2-js" name="tasks[0][category_id]">
@@ -175,6 +179,9 @@
       </td>
       <td>
         <input type="date" name="tasks[${index}][due_date]" class="form-control" />
+      </td>
+      <td>
+        <input type="time" name="tasks[${index}][due_time]" class="form-control" />
       </td>
       <td>
         <select class="form-control select2-js" name="tasks[${index}][category_id]">
