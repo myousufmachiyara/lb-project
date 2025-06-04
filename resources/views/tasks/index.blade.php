@@ -58,77 +58,84 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach($tasks as $item)
-                            <tr>
-                                <td><input type="checkbox" class="task-checkbox" name="task_ids[]" value="{{ $item->id }}"></td>
-                                <td>{{ $loop->iteration }}</td>
-                                <td>
-                                    @php
-                                        $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
-                                            $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
-                                            return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
-                                        });
-                                    @endphp
 
-                                    @if ($imageAttachment)
-                                        <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox="" data-plugin-options="{ &quot;type&quot;:&quot;image&quot; }" title="{{ $item->project->name ?? 'Project' }}">
-                                            <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                    @foreach($groupedTasks as $day => $dayTasks)
+                        <tbody>
+                            <tr class="group-header">
+                                <td colspan="11" class="bg-light text-start text-primary fw-bold">{{ $day }}</td>
+                            </tr>
+
+                            @foreach($dayTasks as $index => $item)
+                                <tr>
+                                    <td><input type="checkbox" class="task-checkbox" name="task_ids[]" value="{{ $item->id }}"></td>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>
+                                        @php
+                                            $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
+                                                $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
+                                                return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+                                            });
+                                        @endphp
+                                        @if ($imageAttachment)
+                                            <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox title="{{ $item->project->name ?? 'Project' }}">
+                                                <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                            </a>
+                                        @else
+                                            <span class="text-muted">No Image</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $item->task_name }}</td>
+                                    <td>{{ $item->project->name ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($item->is_recurring)
+                                            <span class="badge bg-success">{{ $item->recurring_frequency }} days</span>
+                                        @else
+                                            <span class="badge bg-secondary">No</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="{{ $item->custom_status === 'Due' ? 'text-danger' : '' }}">
+                                            {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('l, jS F Y') : 'N/A' }} / 
+                                            {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('g:i A') : 'N/A' }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $item->category->name ?? 'N/A' }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            @if($item->custom_status === 'Due') bg-danger
+                                            @elseif($item->custom_status === 'In Progress') bg-warning
+                                            @elseif($item->custom_status === 'Scheduled') bg-primary
+                                            @elseif($item->custom_status === 'Unscheduled') bg-secondary
+                                            @elseif($item->custom_status === 'Completed') bg-success
+                                            @else bg-info @endif">
+                                            {{ $item->custom_status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $item->description ?? 'N/A' }}</td>
+                                    <td>
+                                        @if(!$item->last_completed_at || ($item->is_recurring && isset($item->next_due_date) && \Carbon\Carbon::parse($item->next_due_date)->lte(\Carbon\Carbon::today())))
+                                            <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
+                                                    <i class="fa fa-check"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $item->id }}">
+                                            <i class="fa fa-edit"></i>
                                         </a>
-                                    @else
-                                        <span class="text-muted">No Image</span>
-                                    @endif
-                                </td>
-
-                                <td>{{ $item->task_name }}</td>
-                                <td>{{ $item->project->name ?? 'N/A' }}</td>
-                                <td>
-                                    @if($item->is_recurring)
-                                        <span class="badge bg-success">Yes ({{ $item->recurring_frequency }} days)</span>
-                                    @else
-                                        <span class="badge bg-secondary">No</span>
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="{{ $item->custom_status === 'Due' ? 'text-danger' : '' }}">
-                                        {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('l, jS F Y') : 'N/A' }} / 
-                                        {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('g:i A') : 'N/A' }}                                
-                                    </span>
-                                </td>
-                                <td>{{ $item->category->name ?? 'N/A' }}</td>
-                                <td>
-                                    <span class="badge 
-                                        @if($item->custom_status === 'Due') bg-danger
-                                        @elseif($item->custom_status === 'In Progress') bg-warning
-                                        @elseif($item->custom_status === 'Scheduled') bg-primary
-                                        @elseif($item->custom_status === 'Unscheduled') bg-secondary
-                                        @elseif($item->custom_status === 'Completed') bg-success
-                                        @else bg-info @endif">
-                                        {{ $item->custom_status }}
-                                    </span>
-                                </td>
-                              
-                                <td>{{ $item->description ?? 'N/A' }}</td>
-                                <td>
-                                    @if(!$item->last_completed_at || ($item->is_recurring && isset($item->next_due_date) && \Carbon\Carbon::parse($item->next_due_date)->lte(\Carbon\Carbon::today())))                                        <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
+                                        <form action="{{ route('tasks.destroy', $item->id) }}" method="POST" style="display:inline;">
                                             @csrf
-                                            <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
-                                                <i class="fa fa-check"></i>
+                                            @method('DELETE')
+                                            <button type="submit" class="text-danger bg-transparent border-0" onclick="return confirm('Are you sure?')">
+                                                <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
-                                    @endif                                    
-                                    <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $item->id }}"><i class="fa fa-edit"></i></a>
-                                    <form action="{{ route('tasks.destroy', $item->id) }}" method="POST" style="display:inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')">
-                                            <i class="fa fa-trash"></i>
-                                        </button>
-                                    </form>                                       
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    @endforeach
                 </table>
             </div>
         </div>
@@ -147,23 +154,13 @@
                             <label>Task Name<span style="color: red;"><strong>*</strong></span></label>
                             <input type="text" class="form-control" placeholder="Task Name" name="task_name" required>
                         </div>
-                        <div class="col-lg-6 mb-2">
+                        <!-- <div class="col-lg-6 mb-2">
                             <label>Recurring</label>
                             <select name="is_recurring" class="form-control">
                                 <option value="0" selected>No</option>
                                 <option value="1">Yes</option>
                             </select>
-                        </div>
-
-                        <div class="col-lg-6 mb-2">
-                            <label>Repeat Days</label>
-                            <select name="recurring_frequency" class="form-control">
-                                <option value="">Repeat After Every</option>
-                                @for ($i = 1; $i <= 30; $i++)
-                                    <option value="{{ $i }}">{{ $i }} days</option>
-                                @endfor
-                            </select>
-                        </div>
+                        </div> -->
 
                         <div class="col-lg-6 mb-2">
                             <label>Due Date</label>
@@ -184,12 +181,13 @@
                                 @endforeach
                             </select>
                         </div>
-                        <div class="col-lg-6 mb-2">
+                       <div class="col-lg-6 mb-2">
                             <label>Status</label>
-                            <select data-plugin-selecttwo class="form-control select2-js"  name="status_id">
-                                <option value="0" disabled selected>Select Status</option>
+                            <select data-plugin-selecttwo class="form-control select2-js" name="status_id">
+                                <option value="0" disabled {{ old('status_id') ? '' : 'selected' }}>Select Status</option>
                                 @foreach ($status as $statuses)
-                                    <option value="{{ $statuses->id }}" {{ old('status_id') == $statuses->id ? 'selected' : '' }}>
+                                    <option value="{{ $statuses->id }}"
+                                        {{ old('status_id') == $statuses->id ? 'selected' : (!old('status_id') && $statuses->name === 'In Progress' ? 'selected' : '') }}>
                                         {{ $statuses->name }}
                                     </option>
                                 @endforeach
@@ -205,6 +203,15 @@
                                         {{ $project->name }}
                                     </option>
                                 @endforeach
+                            </select>
+                        </div>
+                        <div class="col-lg-6 mb-2">
+                            <label>Repeat Days</label>
+                            <select name="recurring_frequency" class="form-control">
+                                <option value="">Repeat After Every</option>
+                                @for ($i = 1; $i <= 30; $i++)
+                                    <option value="{{ $i }}">{{ $i }} days</option>
+                                @endfor
                             </select>
                         </div>
                         <div class="col-lg-6 mb-2">
@@ -241,22 +248,14 @@
                                 <label>Task Name</label>
                                 <input type="text" class="form-control" id="edit_task_name" name="task_name" required>
                             </div>
-                            <div class="col-lg-6 mb-2">
+                            <!-- <div class="col-lg-6 mb-2">
                                 <label>Recurring</label>
                                 <select class="form-control" id="edit_is_recurring" name="is_recurring">
                                     <option value="0">No</option>
                                     <option value="1">Yes</option>
                                 </select>
-                            </div>
-                            <div class="col-lg-6 mb-2">
-                                <label>Repeat Days</label>
-                                <select name="recurring_frequency" id="edit_recurring_frequency" class="form-control">
-                                    <option value="">Repeat After Every</option>
-                                    @for ($i = 1; $i <= 30; $i++)
-                                        <option value="{{ $i }}">{{ $i }} days</option>
-                                    @endfor
-                                </select>
-                            </div>
+                            </div> -->
+
                             <div class="col-lg-6 mb-2">
                                 <label>Due Date</label>
                                 <input type="date" class="form-control" name="due_date" id="edit_due_date">
@@ -292,6 +291,15 @@
                                     @endforeach
                                 </select>
                             </div>
+                                                        <div class="col-lg-6 mb-2">
+                                <label>Repeat Days</label>
+                                <select name="recurring_frequency" id="edit_recurring_frequency" class="form-control">
+                                    <option value="">Repeat After Every</option>
+                                    @for ($i = 1; $i <= 30; $i++)
+                                        <option value="{{ $i }}">{{ $i }} days</option>
+                                    @endfor
+                                </select>
+                            </div>
                             <div class="col-lg-6 mb-2">
                                 <label>Description</label>
                                 <textarea class="form-control" rows="4" id="edit_description" name="description"></textarea>
@@ -315,11 +323,10 @@
   </div>
   <script>
     $(document).ready(function(){
-        var table = $('#cust-datatable-default').DataTable(
-            {
-                "pageLength": 100,  // Show all rows
-            }
-        );
+
+        var table = $('#cust-datatable-default tbody tr').each(function(index) {
+            console.log("Row " + index + ": " + $(this).find('td').length + " cells");
+        });
 
         $('#bulk-complete').on('click', function () {
             const ids = $('.task-checkbox:checked').map(function () {
@@ -394,7 +401,7 @@
                 $('#edit_category_id').val(response.category_id).trigger('change');
                 $('#edit_status_id').val(response.status_id).trigger('change');
                 $('#edit_project_id').val(response.project_id).trigger('change');
-                $('#edit_is_recurring').val(response.is_recurring ? 1 : 0);
+                // $('#edit_is_recurring').val(response.is_recurring ? 1 : 0);
                 $('#edit_recurring_frequency').val(response.recurring_frequency);
 
                 // Set form action dynamically

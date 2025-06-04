@@ -13,16 +13,16 @@ use Illuminate\Support\Facades\Log;
 class TaskController extends Controller
 {
     
-public function index()
-{
-    try {
-        $today = now()->startOfDay();
-        $tomorrow = $today->copy()->addDay(); // Ensure this is defined before map()
+    public function index()
+    {
+        try {
+            $today = now()->startOfDay();
+            $tomorrow = $today->copy()->addDay();
 
-        $tasks = Task::with(['project.attachments', 'category'])
-            ->get()
-            ->map(function ($task) use ($today, $tomorrow) { // Add $tomorrow here
-                // Compute next due date
+            $tasks = Task::with(['project.attachments', 'category'])->get();
+
+            // Enrich each task
+            $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
                 if ($task->is_recurring) {
                     $task->next_due_date = $task->last_completed_at
                         ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
@@ -33,7 +33,6 @@ public function index()
                     $task->next_due_date = null;
                 }
 
-                // Determine custom status
                 if (!$task->is_recurring && $task->last_completed_at) {
                     $task->custom_status = 'Completed';
                 } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
@@ -53,37 +52,67 @@ public function index()
                 }
 
                 return $task;
-            })
-            ->sortBy(function ($task) {
-                $statusOrder = [
-                    'Due' => 0,
-                    'In Progress' => 1,
-                    'Scheduled' => 2,
-                    'Completed' => 3,
-                    'Unscheduled' => 4,
-                    'Unassigned' => 5
-                ];
-                $statusWeight = $statusOrder[$task->custom_status] ?? 99;
-                $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
-                $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+            });
 
-                return [$statusWeight, $dueTimestamp, $timeValue];
-            })
-            ->values();
+            // ✅ Use array instead of Collection to avoid indirect modification error
+            $groupedTasks = [
+                'Due' => [],
+                'Today' => [],
+                'Tomorrow' => [],
+            ];
 
-        $category = TaskCategory::all();
-        $status = ProjectStatus::all();
-        $projects = Project::all();
+            foreach ($tasks as $task) {
+                $dueDate = $task->next_due_date;
 
-        return view('tasks.index', compact('tasks', 'category', 'status', 'projects', 'tomorrow'));
+                if ($dueDate === null) {
+                    continue;
+                }
 
-    } catch (\Exception $e) {
-        \Log::error('Error fetching tasks: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to retrieve tasks.');
+                if ($dueDate->lt($today)) {
+                    $groupedTasks['Due'][] = $task;
+                } elseif ($dueDate->eq($today)) {
+                    $groupedTasks['Today'][] = $task;
+                } elseif ($dueDate->eq($tomorrow)) {
+                    $groupedTasks['Tomorrow'][] = $task;
+                } else {
+                    $dayName = $dueDate->format('l');
+                    if (!isset($groupedTasks[$dayName])) {
+                        $groupedTasks[$dayName] = [];
+                    }
+                    $groupedTasks[$dayName][] = $task;
+                }
+            }
+
+            // Optionally sort tasks within each group
+            foreach ($groupedTasks as $day => $taskGroup) {
+                $groupedTasks[$day] = collect($taskGroup)->sortBy(function ($task) {
+                    $statusOrder = [
+                        'Due' => 0,
+                        'In Progress' => 1,
+                        'Scheduled' => 2,
+                        'Completed' => 3,
+                        'Unscheduled' => 4,
+                        'Unassigned' => 5
+                    ];
+                    $statusWeight = $statusOrder[$task->custom_status] ?? 99;
+                    $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
+                    $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+
+                    return [$statusWeight, $dueTimestamp, $timeValue];
+                })->values();
+            }
+
+            $category = TaskCategory::all();
+            $status = ProjectStatus::all();
+            $projects = Project::all();
+
+            return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
+
+        } catch (\Exception $e) {
+            \Log::error('Error fetching tasks: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to retrieve tasks.');
+        }
     }
-}
-
-
 
     public function filter(Request $request)
     {
@@ -133,12 +162,11 @@ public function index()
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',
                 'due_time'            => 'nullable|date_format:H:i',
-                'is_recurring'        => 'nullable|boolean',
                 'recurring_frequency' => 'nullable|integer|between:1,30',
             ]);
 
-            // Checkbox handling: Laravel sends "0"/"1" as strings, so cast it to bool.
-            $validated['is_recurring'] = (bool) $request->input('is_recurring', false);
+            // Automatically determine if it's recurring
+            $validated['is_recurring'] = !empty($validated['recurring_frequency']);
 
             Task::create($validated);
 
@@ -158,6 +186,7 @@ public function index()
             return redirect()->back()->withInput()->with('error', 'Failed to create task.');
         }
     }
+
 
     public function markComplete($id)
     {
@@ -229,11 +258,11 @@ public function index()
                 'description'         => 'nullable|string',
                 'due_date'            => 'nullable|date',
                 'due_time'            => 'nullable|date_format:H:i',
-                'is_recurring'        => 'nullable|boolean',
                 'recurring_frequency' => 'nullable|integer|between:1,30',
             ]);
 
-            $validated['is_recurring'] = (bool) $request->input('is_recurring', false);
+            // Auto-set recurring flag
+            $validated['is_recurring'] = !empty($validated['recurring_frequency']);
 
             $task->update($validated);
 
