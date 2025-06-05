@@ -57,8 +57,8 @@
                 <th width="15%">Date / Time</th>
                 <th width="10%">Category</th>
                 <th width="8%">Status</th>
-                <th width="22%">Description</th>
-                <th width="10%">Action</th>
+                <th width="20%">Description</th>
+                <th width="12%">Action</th>
             </tr>
         </thead>
         <tbody>
