@@ -68,13 +68,13 @@
 
  <td>
                                                 @php
-                                                    $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
+                                                    $imageAttachment = $task->project?->attachments->firstWhere(function ($att) {
                                                         $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
                                                         return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
                                                     });
                                                 @endphp
                                                 @if ($imageAttachment)
-                                                    <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox title="{{ $item->project->name ?? 'Project' }}">
+                                                    <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox title="{{ $task->project->name ?? 'Project' }}">
                                                         <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
                                                     </a>
                                                 @else
