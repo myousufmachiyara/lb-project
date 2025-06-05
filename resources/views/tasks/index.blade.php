@@ -42,31 +42,30 @@
                         </div>
                     </form> -->
                     <div class="modal-wrapper table-scroll" style="overflow-x: auto;">
-@foreach ($groupedTasks as $group => $tasks)
-<h5 class="text-primary fw-bold mt-3">
-                                    {{ $group }} <span> ({{ count($tasks) }})</span>
-                                </h5>
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr>
-                <th width="5%">S.NO</th>
-                <th width="8%">Image</th>
-                <th width="15%">Title</th>
-                <th width="13%">Project</th>
-                <th width="7%">Repeat</th>
-                <th width="15%">Date / Time</th>
-                <th width="10%">Category</th>
-                <th width="8%">Status</th>
-                <th width="20%">Description</th>
-                <th width="10%">Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($tasks as $index => $task)
-                <tr>
-                    <td>{{ $index + 1 }}</td>
-
- <td>
+                        @foreach ($groupedTasks as $group => $tasks)
+                            <h5 class="text-primary fw-bold mt-3">
+                                {{ $group }} <span> ({{ count($tasks) }})</span>
+                            </h5>
+                            <table class="table table-bordered mt-3">
+                                <thead>
+                                    <tr>
+                                        <th width="5%">S.NO</th>
+                                        <th width="8%">Image</th>
+                                        <th width="15%">Title</th>
+                                        <th width="13%">Project</th>
+                                        <th width="7%">Repeat</th>
+                                        <th width="15%">Date / Time</th>
+                                        <th width="10%">Category</th>
+                                        <th width="8%">Status</th>
+                                        <th width="20%">Description</th>
+                                        <th width="10%">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($tasks as $index => $task)
+                                        <tr>
+                                            <td>{{ $index + 1 }}</td>
+                                            <td>   
                                                 @php
                                                     $imageAttachment = $task->project?->attachments->firstWhere(function ($att) {
                                                         $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
@@ -81,38 +80,32 @@
                                                     <span class="text-muted">No Image</span>
                                                 @endif
                                             </td>
-
-
-                    <td>{{ $task->task_name }}</td>
-                    <td>{{ optional($task->project)->title ?? 'N/A' }}</td>
-                    <td><span class="badge bg-success">{{ $task->is_recurring ? $task->recurring_frequency . ' days' : 'No' }}</span></td>
-
-                    {{-- ✅ Date / Time Display --}}
-                    <td>
-                        {{ $task->next_due_date ? \Carbon\Carbon::parse($task->next_due_date)->format('l, jS F Y') : 'N/A' }}
-                        @if ($task->due_time)
-                            / {{ \Carbon\Carbon::parse($task->due_time)->format('g:i A') }}
-                        @endif
-                    </td>
-
-                    <td>{{ optional($task->category)->name ?? 'N/A' }}</td>
-                    <td>{{ $task->custom_status ?? 'N/A' }}</td>
-                    <td>{{ $task->description ?? 'N/A' }}</td>
-
-                    {{-- ✅ Action Button --}}
-                    <td>
-                        @if(
-                            $task->is_recurring || 
-                            (!$task->is_recurring && !$task->last_completed_at)
-                        )
-                            <form action="{{ route('tasks.complete', $task->id) }}" method="POST" style="display: inline;">
-                                @csrf
-                            <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
-                                                            <i class="fa fa-check"></i>
-                                                        </button>                            </form>
-                        
-                        @endif
-                        <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $task->id }}">
+                                            <td>{{ $task->task_name }}</td>
+                                            <td>{{ optional($task->project)->title ?? 'N/A' }}</td>
+                                            <td><span class="badge bg-success">{{ $task->is_recurring ? $task->recurring_frequency . ' days' : 'No' }}</span></td>
+                                            <td>
+                                                {{ $task->next_due_date ? \Carbon\Carbon::parse($task->next_due_date)->format('l, jS F Y') : 'N/A' }}
+                                                @if ($task->due_time)
+                                                    / {{ \Carbon\Carbon::parse($task->due_time)->format('g:i A') }}
+                                                @endif
+                                            </td>
+                                            <td>{{ optional($task->category)->name ?? 'N/A' }}</td>
+                                            <td>{{ $task->custom_status ?? 'N/A' }}</td>
+                                            <td>{{ $task->description ?? 'N/A' }}</td>
+                                            <td>
+                                                @if(
+                                                    $task->is_recurring || 
+                                                    (!$task->is_recurring && !$task->last_completed_at)
+                                                )
+                                                <form action="{{ route('tasks.complete', $task->id) }}" method="POST" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
+                                                        <i class="fa fa-check"></i>
+                                                    </button>                            
+                                                </form>
+                                                
+                                                @endif
+                                                <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $task->id }}">
                                                     <i class="fa fa-edit"></i>
                                                 </a>
 
@@ -123,15 +116,13 @@
                                                         <i class="fa fa-trash"></i>
                                                     </button>
                                                 </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-@endforeach
-
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        @endforeach
                     </div>
-
                 </div>
             </section>
 
