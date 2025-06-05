@@ -58,7 +58,7 @@
                 <th width="10%">Category</th>
                 <th width="8%">Status</th>
                 <th width="20%">Description</th>
-                <th width="12%">Action</th>
+                <th width="10%">Action</th>
             </tr>
         </thead>
         <tbody>
