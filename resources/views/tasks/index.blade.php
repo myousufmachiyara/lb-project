@@ -42,29 +42,27 @@
                 </div>
             </form> -->
             <div class="modal-wrapper table-scroll" style="overflow-x: auto;">
-                <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="select-all-tasks"></th>
-                            <th>S.NO</th>
-                            <th>Image</th>
-                            <th>Title</th>
-                            <th>Project</th>
-                            <th>Repeat</th>
-                            <th>Date / Time</th>
-                            <th>Category</th>
-                            <th>Status</th>
-                            <th>Description</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-
-                    @foreach($groupedTasks as $day => $dayTasks)
-                        <tbody>
-                            <tr class="group-header">
-                                <td colspan="11" class="bg-light text-start text-primary fw-bold">{{ $day }}</td>
+                @foreach($groupedTasks as $day => $dayTasks)
+                    <h5 class="text-primary fw-bold mt-3">
+                        {{ $day }} <span>({{ count($dayTasks) }})</span>
+                    </h5>                    
+                    <table class="table table-bordered table-striped mb-3 cust-datatable" style="width:100%;">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all-tasks"></th>
+                                <th>S.NO</th>
+                                <th>Image</th>
+                                <th>Title</th>
+                                <th>Project</th>
+                                <th>Repeat</th>
+                                <th>Date / Time</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Description</th>
+                                <th>Action</th>
                             </tr>
-
+                        </thead>
+                        <tbody>
                             @foreach($dayTasks as $index => $item)
                                 <tr>
                                     <td><input type="checkbox" class="task-checkbox" name="task_ids[]" value="{{ $item->id }}"></td>
@@ -95,7 +93,7 @@
                                     </td>
                                     <td>
                                         <span class="{{ $item->custom_status === 'Due' ? 'text-danger' : '' }}">
-                                            {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('l, jS F Y') : 'N/A' }} / 
+                                            {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('l, jS F Y') : 'N/A' }} /
                                             {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('g:i A') : 'N/A' }}
                                         </span>
                                     </td>
@@ -135,9 +133,10 @@
                                 </tr>
                             @endforeach
                         </tbody>
-                    @endforeach
-                </table>
+                    </table>
+                @endforeach
             </div>
+
         </div>
       </section>
 
@@ -216,7 +215,7 @@
                         </div>
                         <div class="col-lg-6 mb-2">
                             <label>Description</label>
-                            <textarea type="text" class="form-control" rows="4" placeholder="Description" name="description"></textarea>
+                            <textarea type="text" class="form-control" rows="4" cols="50" id="description" placeholder="Description" name="description"></textarea>
                         </div>
                     </div>
                 </div>
@@ -324,9 +323,16 @@
   <script>
     $(document).ready(function(){
 
-        var table = $('#cust-datatable-default tbody tr').each(function(index) {
-            console.log("Row " + index + ": " + $(this).find('td').length + " cells");
-        });
+        document.querySelector('#description').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') e.preventDefault();
+        })
+        
+        var table = $('#cust-datatable-default').DataTable(
+            {
+                "order": [[5, "desc"]],
+                "pageLength": 100,  // Show all rows
+            }
+        );
 
         $('#bulk-complete').on('click', function () {
             const ids = $('.task-checkbox:checked').map(function () {
