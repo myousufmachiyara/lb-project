@@ -21,8 +21,8 @@ public function index()
 
         $tasks = Task::with(['project.attachments', 'category'])->get();
 
-        // Add next_due_date and custom_status
         $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
+            // Calculate next_due_date
             if ($task->is_recurring) {
                 $task->next_due_date = $task->last_completed_at
                     ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
@@ -33,32 +33,43 @@ public function index()
                 $task->next_due_date = null;
             }
 
+            // Determine custom_status
             if (!$task->is_recurring && $task->last_completed_at) {
                 $task->custom_status = 'Completed';
-            } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
-                $task->custom_status = 'In Progress';
-            } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
-                $task->custom_status = 'Completed';
-            } elseif ($task->next_due_date === null) {
-                $task->custom_status = 'Unscheduled';
-            } elseif ($task->next_due_date->lt($today)) {
-                $task->custom_status = 'Due';
-            } elseif ($task->next_due_date->eq($today)) {
-                $task->custom_status = 'In Progress';
-            } elseif ($task->next_due_date->eq($tomorrow)) {
-                $task->custom_status = 'Scheduled';
+            } elseif ($task->is_recurring) {
+                if ($task->next_due_date === null) {
+                    $task->custom_status = 'Unscheduled';
+                } elseif ($task->next_due_date->lt($today)) {
+                    $task->custom_status = 'Due';
+                } elseif ($task->next_due_date->lte($today)) {
+                    $task->custom_status = 'In Progress';
+                } else {
+                    $task->custom_status = 'Scheduled';
+                }
             } else {
-                $task->custom_status = 'Scheduled';
+                if ($task->next_due_date === null) {
+                    $task->custom_status = 'Unscheduled';
+                } elseif ($task->next_due_date->lt($today)) {
+                    $task->custom_status = 'Due';
+                } elseif ($task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->next_due_date->eq($tomorrow)) {
+                    $task->custom_status = 'Scheduled';
+                } else {
+                    $task->custom_status = 'Scheduled';
+                }
             }
 
             return $task;
         });
 
-        // Group by formatted date
+        // Group tasks by next_due_date
         $grouped = [];
 
         foreach ($tasks as $task) {
-            if ($task->next_due_date === null) continue;
+            if ($task->next_due_date === null) {
+                continue; // skip tasks with no due date
+            }
 
             $dateKey = $task->next_due_date->format('Y-m-d');
 
@@ -69,16 +80,15 @@ public function index()
             $grouped[$dateKey][] = $task;
         }
 
-        // Sort keys ascending
+        // Sort groups by date ascending
         ksort($grouped);
 
-        // Now build the final grouped list in specific order
+        // Build groupedTasks with special keys for Due, Today, Tomorrow
         $groupedTasks = [];
 
-        // Add Due tasks
+        // Add Due group (tasks with next_due_date < today)
         foreach ($grouped as $date => $list) {
             $carbonDate = \Carbon\Carbon::parse($date);
-
             if ($carbonDate->lt($today)) {
                 $groupedTasks["Due"] = collect($list)->sortBy('due_time')->values();
                 unset($grouped[$date]);
@@ -86,21 +96,21 @@ public function index()
             }
         }
 
-        // Add Today
+        // Add Today group
         $todayKey = $today->format('Y-m-d');
         if (isset($grouped[$todayKey])) {
             $groupedTasks["Today"] = collect($grouped[$todayKey])->sortBy('due_time')->values();
             unset($grouped[$todayKey]);
         }
 
-        // Add Tomorrow
+        // Add Tomorrow group
         $tomorrowKey = $tomorrow->format('Y-m-d');
         if (isset($grouped[$tomorrowKey])) {
             $groupedTasks["Tomorrow"] = collect($grouped[$tomorrowKey])->sortBy('due_time')->values();
             unset($grouped[$tomorrowKey]);
         }
 
-        // Add the rest (sorted by actual date)
+        // Add the rest, formatted by readable date
         foreach ($grouped as $date => $list) {
             $readable = \Carbon\Carbon::parse($date)->format('l, jS F Y');
             $groupedTasks[$readable] = collect($list)->sortBy('due_time')->values();
@@ -116,7 +126,6 @@ public function index()
         return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
 }
-
 
 
     public function filter(Request $request)
@@ -192,7 +201,6 @@ public function index()
         }
     }
 
-
     public function markComplete($id)
     {
         $task = Task::findOrFail($id);
@@ -201,19 +209,19 @@ public function index()
 
         try {
             if ($task->is_recurring) {
-                $frequency = (int) ($task->recurring_frequency ?? 1); // Ensure it's an integer
+                $frequency = (int) ($task->recurring_frequency ?? 1);
 
                 $task->last_completed_at = now();
                 $task->due_date = now()->addDays($frequency)->toDateString();
 
+                // Do NOT update status for recurring tasks
                 $task->save();
             } else {
-                // Non-recurring: mark as complete
+                // Non-recurring: mark complete and update status
                 $task->last_completed_at = now();
                 $task->status_id = 3; // Completed
                 $task->save();
 
-                // Handle project task flow
                 if ($task->project_id) {
                     $nextTask = Task::where('project_id', $task->project_id)
                         ->where('sort_order', '>', $task->sort_order)
