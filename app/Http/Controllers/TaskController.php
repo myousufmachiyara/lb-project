@@ -196,13 +196,11 @@ class TaskController extends Controller
 
         try {
             if ($task->is_recurring) {
-                // Handle recurring task: update last completed and reschedule
-                $frequency = $task->recurring_frequency ?? 1; // Default to 1 if null
+                $frequency = (int) ($task->recurring_frequency ?? 1); // Ensure it's an integer
 
                 $task->last_completed_at = now();
                 $task->due_date = now()->addDays($frequency)->toDateString();
 
-                // Do not change the status to complete
                 $task->save();
             } else {
                 // Non-recurring: mark as complete
