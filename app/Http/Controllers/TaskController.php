@@ -13,106 +13,100 @@ use Illuminate\Support\Facades\Log;
 class TaskController extends Controller
 {
     
-    public function index()
-    {
-        try {
-            $today = now()->startOfDay();
-            $tomorrow = $today->copy()->addDay();
+public function index()
+{
+    try {
+        $today = now()->startOfDay();
+        $tomorrow = $today->copy()->addDay();
 
-            $tasks = Task::with(['project.attachments', 'category'])->get();
+        $tasks = Task::with(['project.attachments', 'category'])->get();
 
-            // Enrich each task
-            $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
-                if ($task->is_recurring) {
-                    $task->next_due_date = $task->last_completed_at
-                        ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
-                        : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
-                } elseif ($task->due_date) {
-                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
-                } else {
-                    $task->next_due_date = null;
-                }
-
-                if (!$task->is_recurring && $task->last_completed_at) {
-                    $task->custom_status = 'Completed';
-                } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
-                    $task->custom_status = 'In Progress';
-                } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
-                    $task->custom_status = 'Completed';
-                } elseif ($task->next_due_date === null) {
-                    $task->custom_status = 'Unscheduled';
-                } elseif ($task->next_due_date->lt($today)) {
-                    $task->custom_status = 'Due';
-                } elseif ($task->next_due_date->eq($today)) {
-                    $task->custom_status = 'In Progress';
-                } elseif ($task->next_due_date->gte($tomorrow)) {
-                    $task->custom_status = 'Scheduled';
-                } else {
-                    $task->custom_status = 'Unassigned';
-                }
-
-                return $task;
-            });
-
-            // ✅ Use array instead of Collection to avoid indirect modification error
-            $groupedTasks = [
-                'Due' => [],
-                'Today' => [],
-                'Tomorrow' => [],
-            ];
-
-            foreach ($tasks as $task) {
-                $dueDate = $task->next_due_date;
-
-                if ($dueDate === null) {
-                    continue;
-                }
-
-                if ($dueDate->lt($today)) {
-                    $groupedTasks['Due'][] = $task;
-                } elseif ($dueDate->eq($today)) {
-                    $groupedTasks['Today'][] = $task;
-                } elseif ($dueDate->eq($tomorrow)) {
-                    $groupedTasks['Tomorrow'][] = $task;
-                } else {
-                    $dayName = $dueDate->format('l');
-                    if (!isset($groupedTasks[$dayName])) {
-                        $groupedTasks[$dayName] = [];
-                    }
-                    $groupedTasks[$dayName][] = $task;
-                }
+        $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
+            if ($task->is_recurring) {
+                $task->next_due_date = $task->last_completed_at
+                    ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
+                    : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
+            } elseif ($task->due_date) {
+                $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
+            } else {
+                $task->next_due_date = null;
             }
 
-            // Optionally sort tasks within each group
-            foreach ($groupedTasks as $day => $taskGroup) {
-                $groupedTasks[$day] = collect($taskGroup)->sortBy(function ($task) {
-                    $statusOrder = [
-                        'Due' => 0,
-                        'In Progress' => 1,
-                        'Scheduled' => 2,
-                        'Completed' => 3,
-                        'Unscheduled' => 4,
-                        'Unassigned' => 5
-                    ];
-                    $statusWeight = $statusOrder[$task->custom_status] ?? 99;
-                    $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
-                    $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
-
-                    return [$statusWeight, $dueTimestamp, $timeValue];
-                })->values();
+            if (!$task->is_recurring && $task->last_completed_at) {
+                $task->custom_status = 'Completed';
+            } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
+                $task->custom_status = 'In Progress';
+            } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                $task->custom_status = 'Completed';
+            } elseif ($task->next_due_date === null) {
+                $task->custom_status = 'Unscheduled';
+            } elseif ($task->next_due_date->lt($today)) {
+                $task->custom_status = 'Due';
+            } elseif ($task->next_due_date->eq($today)) {
+                $task->custom_status = 'In Progress';
+            } elseif ($task->next_due_date->gte($tomorrow)) {
+                $task->custom_status = 'Scheduled';
+            } else {
+                $task->custom_status = 'Unassigned';
             }
 
-            $category = TaskCategory::all();
-            $status = ProjectStatus::all();
-            $projects = Project::all();
+            return $task;
+        });
 
-            return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
+        $groupedTasks = [];
 
-        } catch (\Exception $e) {
-            \Log::error('Error fetching tasks: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to retrieve tasks.');
+        foreach ($tasks as $task) {
+            $dueDate = $task->next_due_date;
+
+            if ($dueDate === null) {
+                continue;
+            }
+
+            if ($dueDate->lt($today)) {
+                $groupedTasks['Due'][] = $task;
+            } elseif ($dueDate->eq($today)) {
+                $groupedTasks['Today'][] = $task;
+            } elseif ($dueDate->eq($tomorrow)) {
+                $groupedTasks['Tomorrow'][] = $task;
+            } else {
+                $dateKey = $dueDate->format('Y-m-d');
+                if (!isset($groupedTasks[$dateKey])) {
+                    $groupedTasks[$dateKey] = [];
+                }
+                $groupedTasks[$dateKey][] = $task;
+            }
         }
+
+        foreach ($groupedTasks as $day => $taskGroup) {
+            $groupedTasks[$day] = collect($taskGroup)->sortBy(function ($task) {
+                $statusOrder = [
+                    'Due' => 0,
+                    'In Progress' => 1,
+                    'Scheduled' => 2,
+                    'Completed' => 3,
+                    'Unscheduled' => 4,
+                    'Unassigned' => 5
+                ];
+                $statusWeight = $statusOrder[$task->custom_status] ?? 99;
+                $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
+                $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+
+                return [$statusWeight, $dueTimestamp, $timeValue];
+            })->values();
+        }
+
+        $category = TaskCategory::all();
+        $status = ProjectStatus::all();
+        $projects = Project::all();
+
+        return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
+
+    } catch (\Exception $e) {
+        \Log::error('Error fetching tasks: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
+}
+
 
     public function filter(Request $request)
     {
