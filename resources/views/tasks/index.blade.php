@@ -66,13 +66,22 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
 
-<td>
-    @if(optional($task->project)->attachments && optional($task->project)->attachments->isNotEmpty())
-        <img src="{{ asset('storage/' . $task->project->attachments->first()->path) }}" width="50" alt="Attachment">
-    @else
-        No Image
-    @endif
-</td>
+ <td>
+                                                @php
+                                                    $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
+                                                        $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
+                                                        return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
+                                                    });
+                                                @endphp
+                                                @if ($imageAttachment)
+                                                    <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox title="{{ $item->project->name ?? 'Project' }}">
+                                                        <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">No Image</span>
+                                                @endif
+                                            </td>
+
 
                     <td>{{ $task->task_name }}</td>
                     <td>{{ optional($task->project)->title ?? 'N/A' }}</td>
