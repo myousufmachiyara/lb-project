@@ -54,7 +54,7 @@
                 <th width="15%">Title</th>
                 <th width="13%">Project</th>
                 <th width="7%">Repeat</th>
-                <th width="18%">Date / Time</th>
+                <th width="15%">Date / Time</th>
                 <th width="10%">Category</th>
                 <th width="8%">Status</th>
                 <th width="22%">Description</th>
