@@ -42,113 +42,75 @@
                         </div>
                     </form> -->
                     <div class="modal-wrapper table-scroll" style="overflow-x: auto;">
-                        @foreach($groupedTasks as $day => $dayTasks)
-                            @php
-                                $label = in_array($day, ['Today', 'Tomorrow', 'Due'])
-                                    ? $day
-                                    : \Carbon\Carbon::parse($day)->format('l, jS F Y');
-                            @endphp
-
-                            @if(count($dayTasks))
-                                <h5 class="text-primary fw-bold mt-3">
-                                    {{ $label }} <span>({{ count($dayTasks) }})</span>
+@foreach ($groupedTasks as $group => $tasks)
+<h5 class="text-primary fw-bold mt-3">
+                                    {{ $group }} <span> ({{ count($tasks) }})</span>
                                 </h5>
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>S.NO</th>
+                <th>Image</th>
+                <th>Title</th>
+                <th>Project</th>
+                <th>Repeat</th>
+                <th>Date / Time</th>
+                <th>Category</th>
+                <th>Status</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($tasks as $index => $task)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
 
-                            <table class="table table-bordered table-striped mb-3 cust-datatable" style="width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox" id="select-all-tasks"></th>
-                                        <th>S.NO</th>
-                                        <th>Image</th>
-                                        <th>Title</th>
-                                        <th>Project</th>
-                                        <th>Repeat</th>
-                                        <th>Date / Time</th>
-                                        <th>Category</th>
-                                        <th>Status</th>
-                                        <th>Description</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($dayTasks as $index => $item)
-                                        <tr>
-                                            <td><input type="checkbox" class="task-checkbox" name="task_ids[]" value="{{ $item->id }}"></td>
-                                            <td>{{ $index + 1 }}</td>
-                                            <td>
-                                                @php
-                                                    $imageAttachment = $item->project?->attachments->firstWhere(function ($att) {
-                                                        $ext = strtolower(pathinfo($att->att_path, PATHINFO_EXTENSION));
-                                                        return in_array($ext, ['jpg', 'jpeg', 'png', 'webp']);
-                                                    });
-                                                @endphp
-                                                @if ($imageAttachment)
-                                                    <a href="{{ asset($imageAttachment->att_path) }}" data-plugin-lightbox title="{{ $item->project->name ?? 'Project' }}">
-                                                        <img class="img-fluid" src="{{ asset($imageAttachment->att_path) }}" alt="Project Image" width="60" height="60" style="object-fit: cover; border-radius: 6px;">
-                                                    </a>
-                                                @else
-                                                    <span class="text-muted">No Image</span>
-                                                @endif
-                                            </td>
-                                            <td>{{ $item->task_name }}</td>
-                                            <td>{{ $item->project->name ?? 'N/A' }}</td>
-                                            <td>
-                                                @if($item->is_recurring)
-                                                    <span class="badge bg-success">{{ $item->recurring_frequency }} days</span>
-                                                @else
-                                                    <span class="badge bg-secondary">No</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <span class="{{ $item->custom_status === 'Due' ? 'text-danger' : '' }}">
-                                                    {{ $item->next_due_date ? \Carbon\Carbon::parse($item->next_due_date)->format('l, jS F Y') : 'N/A' }} /
-                                                    {{ $item->due_time ? \Carbon\Carbon::createFromFormat('H:i:s', $item->due_time)->format('g:i A') : 'N/A' }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $item->category->name ?? 'N/A' }}</td>
-                                            <td>
-                                                <span class="badge 
-                                                    @if($item->custom_status === 'Due') bg-danger
-                                                    @elseif($item->custom_status === 'In Progress') bg-warning
-                                                    @elseif($item->custom_status === 'Scheduled') bg-primary
-                                                    @elseif($item->custom_status === 'Unscheduled') bg-secondary
-                                                    @elseif($item->custom_status === 'Completed') bg-success
-                                                    @else bg-info @endif">
-                                                    {{ $item->custom_status }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $item->description ?? 'N/A' }}</td>
-                                            <td>
-                                                @if (
-                                                    $item->is_recurring || (!$item->is_recurring && !$item->last_completed_at)
-                                                )
-                                                    <form action="{{ route('tasks.complete', $item->id) }}" method="POST" style="display:inline;">
-                                                        @csrf
-                                                        <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
+<td>
+    @if(optional($task->project)->attachments && optional($task->project)->attachments->isNotEmpty())
+        <img src="{{ asset('storage/' . $task->project->attachments->first()->path) }}" width="50" alt="Attachment">
+    @else
+        No Image
+    @endif
+</td>
+
+                    <td>{{ $task->task_name }}</td>
+                    <td>{{ optional($task->project)->title ?? 'N/A' }}</td>
+                    <td><span class="badge bg-success">{{ $task->is_recurring ? $task->recurring_frequency . ' days' : 'No' }}</span></td>
+
+                    {{-- ✅ Date / Time Display --}}
+                    <td>
+                        {{ $task->next_due_date ? \Carbon\Carbon::parse($task->next_due_date)->format('l, jS F Y') : 'N/A' }}
+                        @if ($task->due_time)
+                            / {{ \Carbon\Carbon::parse($task->due_time)->format('g:i A') }}
+                        @endif
+                    </td>
+
+                    <td>{{ optional($task->category)->name ?? 'N/A' }}</td>
+                    <td>{{ $task->custom_status ?? 'N/A' }}</td>
+                    <td>{{ $task->description ?? 'N/A' }}</td>
+
+                    {{-- ✅ Action Button --}}
+                    <td>
+                        @if(
+                            $task->is_recurring || 
+                            (!$task->is_recurring && !$task->last_completed_at)
+                        )
+                            <form action="{{ route('tasks.complete', $task->id) }}" method="POST" style="display: inline;">
+                                @csrf
+<button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
                                                             <i class="fa fa-check"></i>
-                                                        </button>
-                                                    </form>
-                                                @endif
+                                                        </button>                            </form>
+                        @else
+                            <span class="text-muted">Completed</span>
+                        @endif
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endforeach
 
-                                                <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $item->id }}">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-
-                                                <form action="{{ route('tasks.destroy', $item->id) }}" method="POST" style="display:inline;">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="text-danger bg-transparent border-0" onclick="return confirm('Are you sure?')">
-                                                        <i class="fa fa-trash"></i>
-                                                    </button>
-                                                </form>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-
-                            @endif
-                        @endforeach
                     </div>
 
                 </div>

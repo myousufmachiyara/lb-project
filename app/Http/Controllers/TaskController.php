@@ -9,6 +9,7 @@ use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon; 
 
 class TaskController extends Controller
 {
@@ -21,11 +22,11 @@ public function index()
 
         $tasks = Task::with(['project.attachments', 'category'])->get();
 
+        // Compute next_due_date and custom_status
         $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
-            // Calculate next_due_date
             if ($task->is_recurring) {
                 $task->next_due_date = $task->last_completed_at
-                    ? \Carbon\Carbon::parse($task->last_completed_at)->addDays((int) $task->recurring_frequency)
+                    ? \Carbon\Carbon::parse($task->due_date ?? $task->last_completed_at)->copy()->addDays((int) $task->recurring_frequency)
                     : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
             } elseif ($task->due_date) {
                 $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
@@ -33,87 +34,55 @@ public function index()
                 $task->next_due_date = null;
             }
 
-            // Determine custom_status
             if (!$task->is_recurring && $task->last_completed_at) {
                 $task->custom_status = 'Completed';
-            } elseif ($task->is_recurring) {
-                if ($task->next_due_date === null) {
-                    $task->custom_status = 'Unscheduled';
-                } elseif ($task->next_due_date->lt($today)) {
-                    $task->custom_status = 'Due';
-                } elseif ($task->next_due_date->lte($today)) {
-                    $task->custom_status = 'In Progress';
-                } else {
-                    $task->custom_status = 'Scheduled';
-                }
+            } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
+                $task->custom_status = 'In Progress';
+            } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                $task->custom_status = 'Completed';
+            } elseif ($task->next_due_date === null) {
+                $task->custom_status = 'Unscheduled';
+            } elseif ($task->next_due_date->lt($today)) {
+                $task->custom_status = 'Due';
+            } elseif ($task->next_due_date->eq($today)) {
+                $task->custom_status = 'In Progress';
+            } elseif ($task->next_due_date->eq($tomorrow)) {
+                $task->custom_status = 'Scheduled';
             } else {
-                if ($task->next_due_date === null) {
-                    $task->custom_status = 'Unscheduled';
-                } elseif ($task->next_due_date->lt($today)) {
-                    $task->custom_status = 'Due';
-                } elseif ($task->next_due_date->eq($today)) {
-                    $task->custom_status = 'In Progress';
-                } elseif ($task->next_due_date->eq($tomorrow)) {
-                    $task->custom_status = 'Scheduled';
-                } else {
-                    $task->custom_status = 'Scheduled';
-                }
+                $task->custom_status = 'Scheduled';
             }
 
             return $task;
         });
 
-        // Group tasks by next_due_date
-        $grouped = [];
+        // Group by next_due_date (raw format)
+        $groupedByDate = $tasks->filter(function ($task) {
+            return $task->next_due_date !== null;
+        })->groupBy(function ($task) {
+            return $task->next_due_date->toDateString(); // 'Y-m-d'
+        })->sortKeys();
 
-        foreach ($tasks as $task) {
-            if ($task->next_due_date === null) {
-                continue; // skip tasks with no due date
-            }
-
-            $dateKey = $task->next_due_date->format('Y-m-d');
-
-            if (!isset($grouped[$dateKey])) {
-                $grouped[$dateKey] = [];
-            }
-
-            $grouped[$dateKey][] = $task;
-        }
-
-        // Sort groups by date ascending
-        ksort($grouped);
-
-        // Build groupedTasks with special keys for Due, Today, Tomorrow
+        // Now format keys for display
         $groupedTasks = [];
 
-        // Add Due group (tasks with next_due_date < today)
-        foreach ($grouped as $date => $list) {
-            $carbonDate = \Carbon\Carbon::parse($date);
-            if ($carbonDate->lt($today)) {
-                $groupedTasks["Due"] = collect($list)->sortBy('due_time')->values();
-                unset($grouped[$date]);
-                break;
+        foreach ($groupedByDate as $dateKey => $list) {
+            $carbonDate = \Carbon\Carbon::parse($dateKey);
+
+            if ($carbonDate->isToday()) {
+                $heading = 'Today';
+            } elseif ($carbonDate->isTomorrow()) {
+                $heading = 'Tomorrow';
+            } elseif ($carbonDate->lt($today)) {
+                $heading = 'Due';
+            } else {
+                $heading = $carbonDate->format('l, jS F Y');
             }
-        }
 
-        // Add Today group
-        $todayKey = $today->format('Y-m-d');
-        if (isset($grouped[$todayKey])) {
-            $groupedTasks["Today"] = collect($grouped[$todayKey])->sortBy('due_time')->values();
-            unset($grouped[$todayKey]);
-        }
+            if (!isset($groupedTasks[$heading])) {
+                $groupedTasks[$heading] = collect();
+            }
 
-        // Add Tomorrow group
-        $tomorrowKey = $tomorrow->format('Y-m-d');
-        if (isset($grouped[$tomorrowKey])) {
-            $groupedTasks["Tomorrow"] = collect($grouped[$tomorrowKey])->sortBy('due_time')->values();
-            unset($grouped[$tomorrowKey]);
-        }
-
-        // Add the rest, formatted by readable date
-        foreach ($grouped as $date => $list) {
-            $readable = \Carbon\Carbon::parse($date)->format('l, jS F Y');
-            $groupedTasks[$readable] = collect($list)->sortBy('due_time')->values();
+            $groupedTasks[$heading] = $groupedTasks[$heading]->merge($list->sortBy('due_time')->values());
         }
 
         $category = TaskCategory::all();
@@ -126,6 +95,7 @@ public function index()
         return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
 }
+
 
 
     public function filter(Request $request)
@@ -201,53 +171,80 @@ public function index()
         }
     }
 
-    public function markComplete($id)
-    {
-        $task = Task::findOrFail($id);
+public function markComplete($id)
+{
+    Log::info("Starting markComplete for Task ID: {$id}");
 
-        DB::beginTransaction();
+    $task = Task::findOrFail($id);
 
-        try {
-            if ($task->is_recurring) {
-                $frequency = (int) ($task->recurring_frequency ?? 1);
+    DB::beginTransaction();
 
-                $task->last_completed_at = now();
-                $task->due_date = now()->addDays($frequency)->toDateString();
+    try {
+        if ($task->is_recurring) {
+            Log::info("Task ID {$id} is recurring. Last completed at before update: {$task->last_completed_at}, Due date: {$task->due_date}");
 
-                // Do NOT update status for recurring tasks
-                $task->save();
-            } else {
-                // Non-recurring: mark complete and update status
-                $task->last_completed_at = now();
-                $task->status_id = 3; // Completed
-                $task->save();
+            $frequency = (int) ($task->recurring_frequency ?? 1);
+            $currentDueDate = $task->due_date ? Carbon::parse($task->due_date) : Carbon::now();
 
-                if ($task->project_id) {
-                    $nextTask = Task::where('project_id', $task->project_id)
-                        ->where('sort_order', '>', $task->sort_order)
-                        ->orderBy('sort_order', 'asc')
-                        ->first();
-
-                    if ($nextTask) {
-                        if ($nextTask->due_date === null) {
-                            $nextTask->due_date = now()->toDateString();
-                        }
-
-                        $nextTask->status_id = 1; // Assigned/In Progress
-                        $nextTask->save();
-                    }
-                }
+            // Keep adding frequency until due_date is today or in future
+            $today = Carbon::today();
+            while ($currentDueDate->lt($today)) {
+                $currentDueDate->addDays($frequency);
             }
 
-            DB::commit();
+            $task->last_completed_at = now();
+            $task->due_date = $currentDueDate->toDateString();
+            $task->save();
 
-            return redirect()->back()->with('success', 'Task processed successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error("Error completing task: " . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to process task.');
+            Log::info("Task ID {$id} marked completed. Next due date set to: {$task->due_date}");
+        } else {
+            Log::info("Task ID {$id} is non-recurring. Marking complete and updating status.");
+
+            $task->last_completed_at = now();
+            $task->status_id = 3; // Completed
+            $task->save();
+
+            Log::info("Task ID {$id} marked completed at {$task->last_completed_at} with status 3.");
+
+            if ($task->project_id) {
+                Log::info("Looking for next task in project ID {$task->project_id} with sort_order > {$task->sort_order}");
+
+                $nextTask = Task::where('project_id', $task->project_id)
+                    ->where('sort_order', '>', $task->sort_order)
+                    ->orderBy('sort_order', 'asc')
+                    ->first();
+
+                if ($nextTask) {
+                    Log::info("Next task found: ID {$nextTask->id}, due_date: {$nextTask->due_date}");
+
+                    if ($nextTask->due_date === null) {
+                        $nextTask->due_date = now()->toDateString();
+                        Log::info("Next task ID {$nextTask->id} due_date was null, set to today: {$nextTask->due_date}");
+                    }
+
+                    $nextTask->status_id = 1; // Assigned/In Progress
+                    $nextTask->save();
+
+                    Log::info("Next task ID {$nextTask->id} status updated to 1.");
+                } else {
+                    Log::info("No next task found for project ID {$task->project_id}.");
+                }
+            }
         }
+
+        DB::commit();
+        Log::info("markComplete completed successfully for Task ID: {$id}");
+
+        return redirect()->back()->with('success', 'Task processed successfully.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Error completing task ID {$id}: " . $e->getMessage());
+        Log::error($e->getTraceAsString());
+        return redirect()->back()->with('error', 'Failed to process task.');
     }
+}
+
+
 
     public function edit(Task $task)
     {
@@ -256,10 +253,14 @@ public function index()
 
     public function update(Request $request, $id)
     {
+        Log::info("Starting update for Task ID: {$id}");
+
         DB::beginTransaction();
 
         try {
             $task = Task::findOrFail($id);
+
+            Log::info("Task found for update", ['task_id' => $task->id]);
 
             $validated = $request->validate([
                 'task_name'           => 'required|string|max:255',
@@ -272,20 +273,32 @@ public function index()
                 'recurring_frequency' => 'nullable|integer|between:1,30',
             ]);
 
+            Log::info("Validation passed", ['validated_data' => $validated]);
+
             // Auto-set recurring flag
             $validated['is_recurring'] = !empty($validated['recurring_frequency']);
 
             $task->update($validated);
+
+            Log::info("Task updated successfully", ['task_id' => $task->id]);
 
             DB::commit();
 
             return redirect()->route('tasks.index')->with('success', 'Task updated successfully.');
         } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
+
+            Log::warning("Validation failed for Task ID: {$id}", [
+                'errors' => $e->errors(),
+                'input' => $request->all(),
+            ]);
+
             return redirect()->back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating task: ' . $e->getMessage());
+
+            Log::error("Error updating task ID {$id}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
 
             return redirect()->back()->withInput()->with('error', 'Failed to update task.');
         }
