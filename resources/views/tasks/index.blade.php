@@ -56,7 +56,7 @@
                 <th width="7%">Repeat</th>
                 <th width="18%">Date / Time</th>
                 <th width="10%">Category</th>
-                <th width="10%">Status</th>
+                <th width="8%">Status</th>
                 <th width="22%">Description</th>
                 <th width="10%">Action</th>
             </tr>
