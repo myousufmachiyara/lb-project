@@ -21,6 +21,7 @@ public function index()
 
         $tasks = Task::with(['project.attachments', 'category'])->get();
 
+        // Add next_due_date and custom_status
         $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
             if ($task->is_recurring) {
                 $task->next_due_date = $task->last_completed_at
@@ -44,55 +45,65 @@ public function index()
                 $task->custom_status = 'Due';
             } elseif ($task->next_due_date->eq($today)) {
                 $task->custom_status = 'In Progress';
-            } elseif ($task->next_due_date->gte($tomorrow)) {
+            } elseif ($task->next_due_date->eq($tomorrow)) {
                 $task->custom_status = 'Scheduled';
             } else {
-                $task->custom_status = 'Unassigned';
+                $task->custom_status = 'Scheduled';
             }
 
             return $task;
         });
 
-        $groupedTasks = [];
+        // Group by formatted date
+        $grouped = [];
 
         foreach ($tasks as $task) {
-            $dueDate = $task->next_due_date;
+            if ($task->next_due_date === null) continue;
 
-            if ($dueDate === null) {
-                continue;
+            $dateKey = $task->next_due_date->format('Y-m-d');
+
+            if (!isset($grouped[$dateKey])) {
+                $grouped[$dateKey] = [];
             }
 
-            if ($dueDate->lt($today)) {
-                $groupedTasks['Due'][] = $task;
-            } elseif ($dueDate->eq($today)) {
-                $groupedTasks['Today'][] = $task;
-            } elseif ($dueDate->eq($tomorrow)) {
-                $groupedTasks['Tomorrow'][] = $task;
-            } else {
-                $dateKey = $dueDate->format('Y-m-d');
-                if (!isset($groupedTasks[$dateKey])) {
-                    $groupedTasks[$dateKey] = [];
-                }
-                $groupedTasks[$dateKey][] = $task;
+            $grouped[$dateKey][] = $task;
+        }
+
+        // Sort keys ascending
+        ksort($grouped);
+
+        // Now build the final grouped list in specific order
+        $groupedTasks = [];
+
+        // Add Due tasks
+        foreach ($grouped as $date => $list) {
+            $carbonDate = \Carbon\Carbon::parse($date);
+
+            if ($carbonDate->lt($today)) {
+                $groupedTasks["Due"] = collect($list)->sortBy('due_time')->values();
+                unset($grouped[$date]);
+                break;
             }
         }
 
-        foreach ($groupedTasks as $day => $taskGroup) {
-            $groupedTasks[$day] = collect($taskGroup)->sortBy(function ($task) {
-                $statusOrder = [
-                    'Due' => 0,
-                    'In Progress' => 1,
-                    'Scheduled' => 2,
-                    'Completed' => 3,
-                    'Unscheduled' => 4,
-                    'Unassigned' => 5
-                ];
-                $statusWeight = $statusOrder[$task->custom_status] ?? 99;
-                $dueTimestamp = $task->next_due_date ? $task->next_due_date->timestamp : PHP_INT_MAX;
-                $timeValue = $task->due_time ? strtotime($task->due_time) : PHP_INT_MAX;
+        // Add Today
+        $todayKey = $today->format('Y-m-d');
+        if (isset($grouped[$todayKey])) {
+            $groupedTasks["Today"] = collect($grouped[$todayKey])->sortBy('due_time')->values();
+            unset($grouped[$todayKey]);
+        }
 
-                return [$statusWeight, $dueTimestamp, $timeValue];
-            })->values();
+        // Add Tomorrow
+        $tomorrowKey = $tomorrow->format('Y-m-d');
+        if (isset($grouped[$tomorrowKey])) {
+            $groupedTasks["Tomorrow"] = collect($grouped[$tomorrowKey])->sortBy('due_time')->values();
+            unset($grouped[$tomorrowKey]);
+        }
+
+        // Add the rest (sorted by actual date)
+        foreach ($grouped as $date => $list) {
+            $readable = \Carbon\Carbon::parse($date)->format('l, jS F Y');
+            $groupedTasks[$readable] = collect($list)->sortBy('due_time')->values();
         }
 
         $category = TaskCategory::all();
@@ -100,12 +111,12 @@ public function index()
         $projects = Project::all();
 
         return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
-
     } catch (\Exception $e) {
         \Log::error('Error fetching tasks: ' . $e->getMessage());
         return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
 }
+
 
 
     public function filter(Request $request)
