@@ -52,13 +52,13 @@
                 <th width="5%">S.NO</th>
                 <th width="8%">Image</th>
                 <th width="15%">Title</th>
-                <th width="15%">Project</th>
-                <th width="5%">Repeat</th>
-                <th width="20%">Date / Time</th>
+                <th width="13%">Project</th>
+                <th width="7%">Repeat</th>
+                <th width="18%">Date / Time</th>
                 <th width="10%">Category</th>
                 <th width="10%">Status</th>
-                <th width="20%">Description</th>
-                <th>Action</th>
+                <th width="22%">Description</th>
+                <th width="10%">Action</th>
             </tr>
         </thead>
         <tbody>
@@ -107,12 +107,22 @@
                         )
                             <form action="{{ route('tasks.complete', $task->id) }}" method="POST" style="display: inline;">
                                 @csrf
-<button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
+                            <button type="submit" class="text-success bg-transparent border-0" title="Mark as Complete">
                                                             <i class="fa fa-check"></i>
                                                         </button>                            </form>
-                        @else
-                            <span class="text-muted">Completed</span>
+                        
                         @endif
+                        <a href="javascript:void(0);" class="text-primary edit-task-btn" data-id="{{ $task->id }}">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+
+                                                <form action="{{ route('tasks.destroy', $task->id) }}" method="POST" style="display:inline;">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-danger bg-transparent border-0" onclick="return confirm('Are you sure?')">
+                                                        <i class="fa fa-trash"></i>
+                                                    </button>
+                                                </form>
                     </td>
                 </tr>
             @endforeach
