@@ -49,15 +49,15 @@
     <table class="table table-bordered mt-3">
         <thead>
             <tr>
-                <th>S.NO</th>
-                <th>Image</th>
-                <th>Title</th>
-                <th>Project</th>
-                <th>Repeat</th>
-                <th>Date / Time</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Description</th>
+                <th width="5%">S.NO</th>
+                <th width="8%">Image</th>
+                <th width="15%">Title</th>
+                <th width="15%">Project</th>
+                <th width="5%">Repeat</th>
+                <th width="20%">Date / Time</th>
+                <th width="10%">Category</th>
+                <th width="10%">Status</th>
+                <th width="20%">Description</th>
                 <th>Action</th>
             </tr>
         </thead>
