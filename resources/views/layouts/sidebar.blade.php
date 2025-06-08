@@ -18,31 +18,69 @@
       <nav id="menu" class="nav-main" role="navigation">
         <ul class="nav nav-main">
           <li class="active">
-            <a class="nav-link" href="/"> <i class="fa fa-home" aria-hidden="true"></i><span>Dashboard</span></a>    
+            <a class="nav-link" href="/">
+              <i class="fa fa-home" aria-hidden="true"></i><span>Dashboard</span>
+            </a>    
           </li>
 
+          @if(auth()->user()->can('modules.index') || auth()->user()->can('roles.index') || auth()->user()->can('users.index'))
           <li class="nav-parent">
             <a class="nav-link" href="#">
-              <i style="font-size:16px" class="fa fa-layer-group" aria-hidden="true"></i>
+              <i class="fa fa-user-shield" aria-hidden="true"></i>
+              <span>User Management</span>
+            </a>
+            <ul class="nav nav-children">
+              @can('modules.index')
+              <li><a class="nav-link" href="{{ route('modules.index') }}">Modules</a></li>
+              @endcan
+
+              @can('roles.index')
+              <li><a class="nav-link" href="{{ route('roles.index') }}">Roles</a></li>
+              @endcan
+
+              @can('users.index')
+              <li><a class="nav-link" href="{{ route('users.index') }}">Users</a></li>
+              @endcan
+            </ul>
+          </li>
+          @endif
+
+          @if(auth()->user()->can('projects.index') || auth()->user()->can('project-status.index'))
+          <li class="nav-parent">
+            <a class="nav-link" href="#">
+              <i class="fa fa-layer-group" style="font-size:16px" aria-hidden="true"></i>
               <span>Projects</span>
             </a>
             <ul class="nav nav-children">
+              @can('project-status.index')
               <li><a class="nav-link" href="{{ route('project-status.index') }}">Status</a></li>
-              <li><a class="nav-link" href="{{ route('projects.index') }}">All Projects</a></li>	
+              @endcan
+
+              @can('projects.index')
+              <li><a class="nav-link" href="{{ route('projects.index') }}">All Projects</a></li>
+              @endcan
             </ul>
           </li>
+          @endif
 
+          @if(auth()->user()->can('tasks.index') || auth()->user()->can('task-categories.index'))
           <li class="nav-parent">
             <a class="nav-link" href="#">
-              <i style="font-size:16px" class="fa fa-list" aria-hidden="true"></i>
+              <i class="fa fa-list" style="font-size:16px" aria-hidden="true"></i>
               <span>Task</span>
             </a>
             <ul class="nav nav-children">
-              <li><a class="nav-link" href="{{ route('task-categories.index') }}">Categories</a></li>	
-              <li><a class="nav-link" href="{{ route('tasks.index') }}">All Task</a></li>	
+              @can('task-categories.index')
+              <li><a class="nav-link" href="{{ route('task-categories.index') }}">Categories</a></li>
+              @endcan
+
+              @can('tasks.index')
+              <li><a class="nav-link" href="{{ route('tasks.index') }}">All Task</a></li>
+              @endcan
             </ul>
           </li>
-        </ul>	
+          @endif
+        </ul>
       </nav>
 		</div>
 

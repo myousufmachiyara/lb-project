@@ -14,89 +14,87 @@ use Carbon\Carbon;
 class TaskController extends Controller
 {
     
-public function index()
-{
-    try {
-        $today = now()->startOfDay();
-        $tomorrow = $today->copy()->addDay();
+    public function index()
+    {    
+        try {
+            $today = now()->startOfDay();
+            $tomorrow = $today->copy()->addDay();
 
-        $tasks = Task::with(['project.attachments', 'category'])->get();
+            $tasks = Task::with(['project.attachments', 'category'])->get();
 
-        // Compute next_due_date and custom_status
-        $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
-            if ($task->is_recurring) {
-                $task->next_due_date = $task->last_completed_at
-                    ? \Carbon\Carbon::parse($task->due_date ?? $task->last_completed_at)->copy()->addDays((int) $task->recurring_frequency)
-                    : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
-            } elseif ($task->due_date) {
-                $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
-            } else {
-                $task->next_due_date = null;
+            // Compute next_due_date and custom_status
+            $tasks = $tasks->map(function ($task) use ($today, $tomorrow) {
+                if ($task->is_recurring) {
+                    $task->next_due_date = $task->last_completed_at
+                        ? \Carbon\Carbon::parse($task->due_date ?? $task->last_completed_at)->copy()->addDays((int) $task->recurring_frequency)
+                        : ($task->due_date ? \Carbon\Carbon::parse($task->due_date) : null);
+                } elseif ($task->due_date) {
+                    $task->next_due_date = \Carbon\Carbon::parse($task->due_date);
+                } else {
+                    $task->next_due_date = null;
+                }
+
+                if (!$task->is_recurring && $task->last_completed_at) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
+                    $task->custom_status = 'Completed';
+                } elseif ($task->next_due_date === null) {
+                    $task->custom_status = 'Unscheduled';
+                } elseif ($task->next_due_date->lt($today)) {
+                    $task->custom_status = 'Due';
+                } elseif ($task->next_due_date->eq($today)) {
+                    $task->custom_status = 'In Progress';
+                } elseif ($task->next_due_date->eq($tomorrow)) {
+                    $task->custom_status = 'Scheduled';
+                } else {
+                    $task->custom_status = 'Scheduled';
+                }
+
+                return $task;
+            });
+
+            // Group by next_due_date (raw format)
+            $groupedByDate = $tasks->filter(function ($task) {
+                return $task->next_due_date !== null;
+            })->groupBy(function ($task) {
+                return $task->next_due_date->toDateString(); // 'Y-m-d'
+            })->sortKeys();
+
+            // Now format keys for display
+            $groupedTasks = [];
+
+            foreach ($groupedByDate as $dateKey => $list) {
+                $carbonDate = \Carbon\Carbon::parse($dateKey);
+
+                if ($carbonDate->isToday()) {
+                    $heading = 'Today';
+                } elseif ($carbonDate->isTomorrow()) {
+                    $heading = 'Tomorrow';
+                } elseif ($carbonDate->lt($today)) {
+                    $heading = 'Due';
+                } else {
+                    $heading = $carbonDate->format('l, jS F Y');
+                }
+
+                if (!isset($groupedTasks[$heading])) {
+                    $groupedTasks[$heading] = collect();
+                }
+
+                $groupedTasks[$heading] = $groupedTasks[$heading]->merge($list->sortBy('due_time')->values());
             }
 
-            if (!$task->is_recurring && $task->last_completed_at) {
-                $task->custom_status = 'Completed';
-            } elseif ($task->is_recurring && $task->next_due_date && $task->next_due_date->eq($today)) {
-                $task->custom_status = 'In Progress';
-            } elseif ($task->is_recurring && $task->last_completed_at && now()->diffInDays($task->last_completed_at) < (int) $task->recurring_frequency) {
-                $task->custom_status = 'Completed';
-            } elseif ($task->next_due_date === null) {
-                $task->custom_status = 'Unscheduled';
-            } elseif ($task->next_due_date->lt($today)) {
-                $task->custom_status = 'Due';
-            } elseif ($task->next_due_date->eq($today)) {
-                $task->custom_status = 'In Progress';
-            } elseif ($task->next_due_date->eq($tomorrow)) {
-                $task->custom_status = 'Scheduled';
-            } else {
-                $task->custom_status = 'Scheduled';
-            }
+            $category = TaskCategory::all();
+            $status = ProjectStatus::all();
+            $projects = Project::all();
 
-            return $task;
-        });
-
-        // Group by next_due_date (raw format)
-        $groupedByDate = $tasks->filter(function ($task) {
-            return $task->next_due_date !== null;
-        })->groupBy(function ($task) {
-            return $task->next_due_date->toDateString(); // 'Y-m-d'
-        })->sortKeys();
-
-        // Now format keys for display
-        $groupedTasks = [];
-
-        foreach ($groupedByDate as $dateKey => $list) {
-            $carbonDate = \Carbon\Carbon::parse($dateKey);
-
-            if ($carbonDate->isToday()) {
-                $heading = 'Today';
-            } elseif ($carbonDate->isTomorrow()) {
-                $heading = 'Tomorrow';
-            } elseif ($carbonDate->lt($today)) {
-                $heading = 'Due';
-            } else {
-                $heading = $carbonDate->format('l, jS F Y');
-            }
-
-            if (!isset($groupedTasks[$heading])) {
-                $groupedTasks[$heading] = collect();
-            }
-
-            $groupedTasks[$heading] = $groupedTasks[$heading]->merge($list->sortBy('due_time')->values());
+            return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
+        } catch (\Exception $e) {
+            \Log::error('Error fetching tasks: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to retrieve tasks.');
         }
-
-        $category = TaskCategory::all();
-        $status = ProjectStatus::all();
-        $projects = Project::all();
-
-        return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
-    } catch (\Exception $e) {
-        \Log::error('Error fetching tasks: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
-}
-
-
 
     public function filter(Request $request)
     {

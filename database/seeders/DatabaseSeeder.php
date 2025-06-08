@@ -12,6 +12,8 @@ use App\Models\HeadOfAccounts;
 use App\Models\SubHeadOfAccounts;
 use App\Models\ChartOfAccounts;
 use App\Models\ProjectStatus;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class DatabaseSeeder extends Seeder
 {
@@ -23,11 +25,14 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         $now = now(); // Get the current timestamp
 
-        User::insert([
-            'name' => 'admin',
+        $admin = User::create([
+            'name' => 'Admin',
             'email' => 'admin@gmail.com',
             'password' => Hash::make('12345678'),
         ]);
+
+        $role = Role::firstOrCreate(['name' => 'superadmin']);
+        $admin->assignRole($role);
 
         // HeadOfAccounts::insert([
         //     ['id' => 1, 'name' => 'Assets'],

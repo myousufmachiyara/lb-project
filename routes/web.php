@@ -2,7 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
-
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SubHeadOfAccController;
@@ -11,11 +10,26 @@ use App\Http\Controllers\ProjectStatusController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskCategoryController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\RoleController;
+use Spatie\Permission\Middleware\RoleMiddleware;
+use App\Http\Controllers\ModuleController;
 
 // Auth routes (login, register, forgot password)
 Auth::routes();
 
-// All routes below require login
+Route::middleware(['auth', RoleMiddleware::class . ':admin|superadmin'])->group(function () {
+    Route::resource('users', UserController::class);
+    Route::resource('roles', RoleController::class);
+    Route::resource('permissions', PermissionController::class);
+    Route::get('roles/{id}/permissions', [RoleController::class, 'showPermissionsForm'])->name('roles.permissions');
+    Route::post('roles/{id}/permissions', [RoleController::class, 'assignPermissions'])->name('roles.assign-permissions');
+});
+
+Route::middleware(['auth', RoleMiddleware::class . ':superadmin'])->group(function () {
+    Route::resource('modules', ModuleController::class);
+});
+
 Route::middleware(['auth'])->group(function () {
     // Dashboard (home page)
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
@@ -48,4 +62,5 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/{id}/complete', [TaskController::class, 'markComplete'])->name('tasks.complete');
     Route::post('/tasks/bulk-complete', [TaskController::class, 'bulkComplete'])->name('tasks.bulk-complete');
     Route::post('/tasks/bulk-delete', [TaskController::class, 'bulkDelete'])->name('tasks.bulk-delete');
+
 });

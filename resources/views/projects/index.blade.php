@@ -94,14 +94,16 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a class="text-success showPcsBtn" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-eye"></i></a>
-                                        <a class="text-dark updatePcsBtn" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-retweet"></i></a>
+                                        <a class="text-success showPcsBtn mx-1" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-eye"></i></a>
+                                        <a class="text-success showPcsBtn mx-1" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-plus"></i></a>
                                         <a href="{{ route('projects.edit', $project->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
                                         <form action="{{ route('projects.destroy', $project->id) }}" method="POST" style="display:inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></button>
-                                        </form>                                       
+                                        </form>  
+                                        <a class="text-dark updatePcsBtn" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-arrow-right"></i></a>
+                                     
                                     </td>
                                 </tr>
                                 @endforeach
