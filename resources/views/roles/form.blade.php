@@ -21,10 +21,10 @@
             <thead class="bg-primary text-white text-center">
                 <tr>
                     <th>Module</th>
+                    <th>View</th>
                     <th>Add</th>
                     <th>Edit</th>
                     <th>Delete</th>
-                    <th>View</th>
                     <th>Print</th>
                 </tr>
             </thead>
@@ -40,7 +40,7 @@
                         }
                     }
 
-                    $actions = ['create' => 'Add', 'edit' => 'Edit', 'delete' => 'Delete', 'index' => 'View', 'print' => 'Print'];
+                    $actions = ['index' => 'Index', 'create' => 'Add', 'edit' => 'Edit', 'delete' => 'Delete', 'print' => 'Print'];
                 @endphp
 
 

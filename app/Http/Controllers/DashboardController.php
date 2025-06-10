@@ -12,6 +12,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
+        
         try {
             // Total number of projects with status_id = 2
             $totalProjects = Project::where('status_id', 2)->count();

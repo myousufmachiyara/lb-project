@@ -26,7 +26,7 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
         $modules = Module::all(); // assuming you have a Module model
-        $actions = ['create', 'edit', 'delete', 'view', 'print'];
+        $actions = ['index', 'create', 'edit', 'delete', 'view' , 'print'];
 
         return view('roles.assign-permissions', compact('role', 'modules', 'actions'));
     }
@@ -34,7 +34,7 @@ class RoleController extends Controller
     public function assignPermissionsForm(Role $role)
     {
         $modules = Module::all();
-        $actions = ['index', 'create', 'edit', 'delete', 'print'];
+        $actions = ['index', 'create', 'edit', 'delete', 'view' , 'print'];
 
         return view('roles.permissions', compact('role', 'modules', 'actions'));
     }
