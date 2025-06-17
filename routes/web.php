@@ -14,6 +14,9 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\RoleController;
 use Spatie\Permission\Middleware\RoleMiddleware;
 use App\Http\Controllers\ModuleController;
+use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\QuotationController;
+use App\Http\Controllers\PurchaseVoucherController;
 
 // Auth routes (login, register, forgot password)
 Auth::routes();
@@ -28,6 +31,7 @@ Route::middleware(['auth', RoleMiddleware::class . ':admin|superadmin'])->group(
 
 Route::middleware(['auth', RoleMiddleware::class . ':superadmin'])->group(function () {
     Route::resource('modules', ModuleController::class);
+    Route::get('modules/{id}/json', [ModuleController::class, 'json']);
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -38,8 +42,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     // Accounts
-    // Route::resource('shoa', SubHeadOfAccController::class);
-    // Route::resource('coa', COAController::class);
+    Route::resource('shoa', SubHeadOfAccController::class);
+    Route::resource('coa', COAController::class);
 
     // Projects
     Route::resource('project-status', ProjectStatusController::class);
@@ -63,4 +67,21 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/bulk-complete', [TaskController::class, 'bulkComplete'])->name('tasks.bulk-complete');
     Route::post('/tasks/bulk-delete', [TaskController::class, 'bulkDelete'])->name('tasks.bulk-delete');
 
+    // Purchase Vouchers
+    Route::resource('purchase-vouchers', PurchaseVoucherController::class);
+
+    // Sale Vouchers
+    Route::resource('sale-vouchers', \App\Http\Controllers\SaleVoucherController::class);
+
+    // Services
+    Route::resource('services', ServiceController::class);
+
+    // Quotations
+    Route::resource('quotations', QuotationController::class);
+
+    // Payment Vouchers
+    Route::resource('payment-vouchers', \App\Http\Controllers\PaymentVoucherController::class);
+
+    // Setup (if you have a dedicated SetupController)
+    Route::resource('setup', \App\Http\Controllers\SetupController::class);
 });

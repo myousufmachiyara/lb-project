@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Users | Roles')
+@section('title', 'Sales | All Quotation')
 
 @section('content')
     <div class="row">
@@ -16,9 +16,9 @@
                 </div>
                 @endif
                 <header class="card-header" style="display: flex;justify-content: space-between;">
-                    <h2 class="card-title">All Roles</h2>
+                    <h2 class="card-title">All Quotations</h2>
                     <div>
-                        <a href="{{ route('roles.create') }}" class="btn btn-primary"> <i class="fas fa-plus"></i> New Role </a>
+                        <a href="{{ route('quotations.create') }}" class="btn btn-primary"> <i class="fas fa-plus"></i> New Quotation </a>
                     </div>
                 </header>
                 <div class="card-body">
@@ -26,22 +26,25 @@
                         <table class="table table-bordered table-striped mb-0" id="cust-datatable-default">
                             <thead>
                                 <tr>
-                                    <th>S.No</th>
-                                    <th>Name</th>
+                                    <th>#</th>
+                                    <th>Customer Name</th>
+                                    <th>Date</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($roles as $role)
+                                @foreach($quotations as $quotation)
                                     <tr>
-                                        <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $role->name }}</td>
+                                        <td>{{ $quotation->id }}</td>
+                                        <td>{{ $quotation->customer_name }}</td>
+                                        <td>{{ $quotation->date }}</td>
                                         <td>
-                                            <a href="{{ route('roles.edit', $role->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
-                                            <!-- <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="d-inline">
-                                                @csrf @method('DELETE')
+                                            <a href="{{ route('quotations.edit', $quotation->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
+                                            <form action="{{ route('quotations.destroy', $quotation->id) }}" method="POST" style="display:inline-block;">
+                                                @csrf
+                                                @method('DELETE')
                                                 <button class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></button>
-                                            </form> -->
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach

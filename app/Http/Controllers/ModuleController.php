@@ -14,11 +14,6 @@ class ModuleController extends Controller
         return view('modules.index', compact('modules'));
     }
 
-    public function create()
-    {
-        return view('modules.create');
-    }
-
     public function store(Request $request)
     {
         $request->validate([
@@ -31,7 +26,7 @@ class ModuleController extends Controller
         $module = Module::create($request->only('name', 'shortcode', 'status'));
 
         // Define your actions
-        $actions = ['create', 'edit', 'delete', 'view', 'print'];
+        $actions = ['index' , 'create', 'edit', 'delete', 'print'];
 
         // Create permissions dynamically for this module
         foreach ($actions as $action) {
@@ -46,10 +41,10 @@ class ModuleController extends Controller
         return redirect()->route('modules.index')->with('success', 'Module and permissions created successfully.');
     }
 
-    public function edit($id)
+    public function json($id)
     {
         $module = Module::findOrFail($id);
-        return view('modules.edit', compact('module'));
+        return response()->json($module);
     }
 
     public function update(Request $request, $id)
@@ -67,11 +62,11 @@ class ModuleController extends Controller
         return redirect()->route('modules.index')->with('success', 'Module updated successfully.');
     }
 
-    public function destroy($id)
-    {
-        $module = Module::findOrFail($id);
-        $module->delete();
+    // public function destroy($id)
+    // {
+    //     $module = Module::findOrFail($id);
+    //     $module->delete();
 
-        return redirect()->route('modules.index')->with('success', 'Module deleted successfully.');
-    }
+    //     return redirect()->route('modules.index')->with('success', 'Module deleted successfully.');
+    // }
 }

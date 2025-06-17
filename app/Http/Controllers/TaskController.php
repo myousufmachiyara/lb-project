@@ -169,81 +169,79 @@ class TaskController extends Controller
         }
     }
 
-public function markComplete($id)
-{
-    Log::info("Starting markComplete for Task ID: {$id}");
+    public function markComplete($id)
+    {
+        Log::info("Starting markComplete for Task ID: {$id}");
 
-    $task = Task::findOrFail($id);
+        $task = Task::findOrFail($id);
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
-        if ($task->is_recurring) {
-            Log::info("Task ID {$id} is recurring. Last completed at before update: {$task->last_completed_at}, Due date: {$task->due_date}");
+        try {
+            if ($task->is_recurring) {
+                Log::info("Task ID {$id} is recurring. Last completed at before update: {$task->last_completed_at}, Due date: {$task->due_date}");
 
-            $frequency = (int) ($task->recurring_frequency ?? 1);
-            $currentDueDate = $task->due_date ? Carbon::parse($task->due_date) : Carbon::now();
+                $frequency = (int) ($task->recurring_frequency ?? 1);
+                $currentDueDate = $task->due_date ? Carbon::parse($task->due_date) : Carbon::now();
 
-            // Keep adding frequency until due_date is today or in future
-            $today = Carbon::today();
-            while ($currentDueDate->lt($today)) {
-                $currentDueDate->addDays($frequency);
-            }
+                // Keep adding frequency until due_date is today or in future
+                $today = Carbon::today();
+                while ($currentDueDate->lt($today)) {
+                    $currentDueDate->addDays($frequency);
+                }
 
-            $task->last_completed_at = now();
-            $task->due_date = $currentDueDate->toDateString();
-            $task->save();
+                $task->last_completed_at = now();
+                $task->due_date = $currentDueDate->toDateString();
+                $task->save();
 
-            Log::info("Task ID {$id} marked completed. Next due date set to: {$task->due_date}");
-        } else {
-            Log::info("Task ID {$id} is non-recurring. Marking complete and updating status.");
+                Log::info("Task ID {$id} marked completed. Next due date set to: {$task->due_date}");
+            } else {
+                Log::info("Task ID {$id} is non-recurring. Marking complete and updating status.");
 
-            $task->last_completed_at = now();
-            $task->status_id = 3; // Completed
-            $task->save();
+                $task->last_completed_at = now();
+                $task->status_id = 3; // Completed
+                $task->save();
 
-            Log::info("Task ID {$id} marked completed at {$task->last_completed_at} with status 3.");
+                Log::info("Task ID {$id} marked completed at {$task->last_completed_at} with status 3.");
 
-            if ($task->project_id) {
-                Log::info("Looking for next task in project ID {$task->project_id} with sort_order > {$task->sort_order}");
+                if ($task->project_id) {
+                    Log::info("Looking for next task in project ID {$task->project_id} with sort_order > {$task->sort_order}");
 
-                $nextTask = Task::where('project_id', $task->project_id)
-                    ->where('sort_order', '>', $task->sort_order)
-                    ->orderBy('sort_order', 'asc')
-                    ->first();
+                    $nextTask = Task::where('project_id', $task->project_id)
+                        ->where('sort_order', '>', $task->sort_order)
+                        ->orderBy('sort_order', 'asc')
+                        ->first();
 
-                if ($nextTask) {
-                    Log::info("Next task found: ID {$nextTask->id}, due_date: {$nextTask->due_date}");
+                    if ($nextTask) {
+                        Log::info("Next task found: ID {$nextTask->id}, due_date: {$nextTask->due_date}");
 
-                    if ($nextTask->due_date === null) {
-                        $nextTask->due_date = now()->toDateString();
-                        Log::info("Next task ID {$nextTask->id} due_date was null, set to today: {$nextTask->due_date}");
+                        if ($nextTask->due_date === null) {
+                            $nextTask->due_date = now()->toDateString();
+                            Log::info("Next task ID {$nextTask->id} due_date was null, set to today: {$nextTask->due_date}");
+                        }
+
+                        $nextTask->status_id = 1; // Assigned/In Progress
+                        $nextTask->save();
+
+                        Log::info("Next task ID {$nextTask->id} status updated to 1.");
+                    } else {
+                        Log::info("No next task found for project ID {$task->project_id}.");
                     }
-
-                    $nextTask->status_id = 1; // Assigned/In Progress
-                    $nextTask->save();
-
-                    Log::info("Next task ID {$nextTask->id} status updated to 1.");
-                } else {
-                    Log::info("No next task found for project ID {$task->project_id}.");
                 }
             }
+
+            DB::commit();
+            Log::info("markComplete completed successfully for Task ID: {$id}");
+
+            return redirect()->back()->with('success', 'Task processed successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error completing task ID {$id}: " . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return redirect()->back()->with('error', 'Failed to process task.');
         }
-
-        DB::commit();
-        Log::info("markComplete completed successfully for Task ID: {$id}");
-
-        return redirect()->back()->with('success', 'Task processed successfully.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Error completing task ID {$id}: " . $e->getMessage());
-        Log::error($e->getTraceAsString());
-        return redirect()->back()->with('error', 'Failed to process task.');
     }
-}
-
-
-
+    
     public function edit(Task $task)
     {
         return response()->json($task);
