@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('purchase_vouchers', function (Blueprint $table) {
             $table->id();
-            $table->string('voucher_id')->unique();
+            $table->string('voucher_id')->nullable()->unique();
             $table->unsignedBigInteger('coa_id'); // FK to chart_of_accounts
             $table->date('date');
             $table->string('status')->default('pending');

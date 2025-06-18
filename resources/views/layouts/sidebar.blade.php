@@ -125,7 +125,7 @@
             <a class="nav-link" href="#"><i class="fa fa-sun"></i><span>Others</span></a>
             <ul class="nav nav-children">
               @can('status_management.index')
-                <li><a class="nav-link" href="{{ route('project-status.index') }}">Status</a></li>
+                <li><a class="nav-link" href="{{ route('status.index') }}">Status</a></li>
               @endcan
             </ul>
           </li>

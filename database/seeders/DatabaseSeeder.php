@@ -11,7 +11,8 @@ use App\Models\User;
 use App\Models\HeadOfAccounts;
 use App\Models\SubHeadOfAccounts;
 use App\Models\ChartOfAccounts;
-use App\Models\ProjectStatus;
+use App\Models\Status;
+use App\Models\Service;
 use App\Models\Module;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -110,10 +111,21 @@ class DatabaseSeeder extends Seeder
             ['id' => 9, 'shoa_id' => 7 , 'name' => "Owner's Equity", 'receivables' => "0", 'payables' => "0", 'opening_date' => "2025-01-01", 'remarks' => "Equity", 'address' => "", 'phone_no' => "",'created_at' => $now, 'updated_at' => $now], 
         ]);
 
-        // ProjectStatus::insert([
-        //     ['id' => 1, 'name' => 'Assigned', 'color' => '#ff3838'],
-        //     ['id' => 2, 'name' => 'In Progress', 'color' => '#f9b115'],
-        //     ['id' => 3, 'name' => 'Completed', 'color' => '#8fd016'],
-        // ]);
+        Service::insert([
+            ['name' => 'Fabrication'],
+            ['name' => 'Designing'],
+            ['name' => 'Digitizing'],
+            ['name' => 'Dyeing'],
+            ['name' => 'Embroidery'],
+            ['name' => 'Handwork'],
+            ['name' => 'Printing'],
+            ['name' => 'Stitching'],
+        ]);
+
+        Status::insert([
+            ['id' => 1, 'name' => 'Assigned', 'color' => '#ff3838'],
+            ['id' => 2, 'name' => 'In Progress', 'color' => '#f9b115'],
+            ['id' => 3, 'name' => 'Completed', 'color' => '#8fd016'],
+        ]);
     }
 }

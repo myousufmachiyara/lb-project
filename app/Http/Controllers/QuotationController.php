@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Elibyy\TCPDF\Facades\TCPDF;
+use Illuminate\Support\Facades\View;
 
 class QuotationController extends Controller
 {
@@ -83,7 +85,10 @@ class QuotationController extends Controller
 
     public function edit(Quotation $quotation)
     {
-        return view('quotations.edit', compact('quotation'));
+        $quotation->load('details'); // eager load related details
+        $services = Service::all();  // assuming you have a Service model
+
+        return view('quotations.edit', compact('quotation', 'services'));
     }
 
     public function update(Request $request, Quotation $quotation)
@@ -157,5 +162,79 @@ class QuotationController extends Controller
             Log::error('Quotation deletion failed: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to delete quotation.');
         }
+    }
+
+    public function print($id)
+    {
+        $quotation = Quotation::with('details.service')->findOrFail($id);
+
+        $pdf = new \TCPDF();
+
+        $pdf->SetTitle('Quotation - ' . $quotation->customer_name);
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->AddPage();
+
+        // Logo + Header
+        $logo = public_path('images/company-logo.png'); // Update with correct logo path
+        $html = '
+            <div style="text-align: center;">
+                <img src="' . $logo . '" height="60"><br>
+                <h2>Quotation</h2>
+            </div>
+            <table cellspacing="0" cellpadding="4">
+                <tr>
+                    <td><strong>Customer Name:</strong> ' . $quotation->customer_name . '</td>
+                    <td align="right"><strong>Date:</strong> ' . $quotation->date . '</td>
+                </tr>
+            </table>
+            <br><br>
+            <table border="1" cellpadding="4" cellspacing="0">
+                <thead>
+                    <tr style="background-color: #f5f5f5;font-weight:bold">
+                        <th width="5%">#</th>
+                        <th width="25%">Service</th>
+                        <th width="25%">Description</th>
+                        <th width="10%">Qty</th>
+                        <th width="10%">Unit</th>
+                        <th width="10%">Cost</th>
+                        <th width="15%">Total</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        foreach ($quotation->details as $index => $detail) {
+            $cost = $detail->quantity * $detail->cost;
+            $charges = $cost * ($detail->service_charges_per_pc / 100);
+            $total = $cost + $charges;
+
+            $html .= '
+                <tr>
+                    <td width="5%">' . ($index + 1) . '</td>
+                    <td width="25%">' . ($detail->service->name ?? '-') . '</td>
+                    <td width="25%">' . ($detail->description ?? '-') . '</td>
+                    <td width="10%" align="center">' . $detail->quantity . '</td>
+                    <td width="10%" align="center">' . $detail->unit . '</td>
+                    <td width="10%" align="right">' . number_format($detail->cost, 2) . '</td>
+                    <td width="15%" align="right">' . number_format($total, 2) . '</td>
+                </tr>';
+        }
+
+        $html .= '</tbody></table><br><br>';
+
+        // Write main content
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        // Move to bottom for signature block
+        $pdf->SetY(-40);
+        $signatureHtml = '
+            <table width="100%" cellpadding="4">
+                <tr>
+                    <td align="right"><strong>Approved By:</strong> ____________________</td>
+                </tr>
+            </table>';
+        $pdf->writeHTML($signatureHtml, true, false, true, false, '');
+
+        $pdf->lastPage();
+        return $pdf->Output('quotation-' . $quotation->id . '.pdf', 'I');
     }
 }

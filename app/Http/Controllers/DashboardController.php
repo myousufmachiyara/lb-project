@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Project, ProjectStatus, Task};
+use App\Models\{Project, Status, Task};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Task;
 use App\Models\TaskCategory;
-use App\Models\ProjectStatus;
+use App\Models\Status;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -86,7 +86,7 @@ class TaskController extends Controller
             }
 
             $category = TaskCategory::all();
-            $status = ProjectStatus::all();
+            $status = Status::all();
             $projects = Project::all();
 
             return view('tasks.index', compact('groupedTasks', 'category', 'status', 'projects', 'tomorrow'));
@@ -125,7 +125,7 @@ class TaskController extends Controller
             ->get();
 
         $category = TaskCategory::all();
-        $status = ProjectStatus::all();
+        $status = Status::all();
         $projects = Project::all();
 
         return view('tasks.index', compact('tasks', 'category', 'status', 'projects'));

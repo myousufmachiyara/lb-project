@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('project_status', function (Blueprint $table) {
+        Schema::create('project_attachments', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('color');
+            $table->unsignedBigInteger('proj_id');
+            $table->string('att_path');
             $table->timestamps();
+            
+            $table->foreign('proj_id')->references('id')->on('projects')->onDelete('cascade');
         });
     }
 
@@ -24,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('project_status');
+        Schema::dropIfExists('project_attachments');
     }
 };

@@ -6,7 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\SubHeadOfAccController;
 use App\Http\Controllers\COAController;
-use App\Http\Controllers\ProjectStatusController;
+use App\Http\Controllers\StatusController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TaskCategoryController;
 use App\Http\Controllers\TaskController;
@@ -45,11 +45,14 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('shoa', SubHeadOfAccController::class);
     Route::resource('coa', COAController::class);
 
-    // Projects
-    Route::resource('project-status', ProjectStatusController::class);
-    Route::get('project-status/{id}/json', [ProjectStatusController::class, 'showJson'])->name('project-status.show-json');
+    //Status
+    Route::resource('status', StatusController::class);
+    Route::get('status/{id}/json', [StatusController::class, 'showJson'])->name('status.show-json');
 
+    // Projects
     Route::resource('projects', ProjectController::class);
+    Route::get('project-costing/{id}', [ProjectController::class, 'costingForm'])->name('project.costing');
+    Route::post('projects/{project}/costing', [ProjectController::class, 'storeCosting'])->name('projects.costing.store');
 
     Route::post('project-pcs-update/{id}', [ProjectController::class, 'pcsUpdate'])->name('project-pcs-update');
     Route::get('project-pcs-show/{id}', [ProjectController::class, 'getPcs'])->name('project-pcs-show');
@@ -69,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
 
     // Purchase Vouchers
     Route::resource('purchase-vouchers', PurchaseVoucherController::class);
+    Route::get('purchase-vouchers/{id}/print', [PurchaseVoucherController::class, 'print'])->name('pv.print');
 
     // Sale Vouchers
     Route::resource('sale-vouchers', \App\Http\Controllers\SaleVoucherController::class);
@@ -78,10 +82,8 @@ Route::middleware(['auth'])->group(function () {
 
     // Quotations
     Route::resource('quotations', QuotationController::class);
+    Route::get('quotations/{id}/print', [QuotationController::class, 'print'])->name('quotations.print');
 
     // Payment Vouchers
     Route::resource('payment-vouchers', \App\Http\Controllers\PaymentVoucherController::class);
-
-    // Setup (if you have a dedicated SetupController)
-    Route::resource('setup', \App\Http\Controllers\SetupController::class);
 });

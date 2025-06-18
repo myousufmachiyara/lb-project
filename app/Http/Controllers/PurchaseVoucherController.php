@@ -31,7 +31,7 @@ class PurchaseVoucherController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'voucher_id' => 'required|unique:purchase_vouchers,voucher_id',
+            // 'voucher_id' => 'required|unique:purchase_vouchers,voucher_id', // Remove this line
             'coa_id' => 'required|exists:chart_of_accounts,id',
             'date' => 'required|date',
             'status' => 'required|string',
@@ -45,14 +45,19 @@ class PurchaseVoucherController extends Controller
         DB::beginTransaction();
 
         try {
+            // Step 1: Create voucher without voucher_id
             $voucher = PurchaseVoucher::create([
-                'voucher_id' => $request->voucher_id,
                 'coa_id' => $request->coa_id,
                 'date' => $request->date,
                 'status' => $request->status,
                 'created_by' => Auth::id()
             ]);
 
+            // Step 2: Generate voucher_id as PV + padded ID (e.g. PV01)
+            $voucher->voucher_id = 'PV' . str_pad($voucher->id, 2, '0', STR_PAD_LEFT);
+            $voucher->save();
+
+            // Step 3: Store details
             foreach ($request->details as $detail) {
                 $imagePath = null;
                 if (isset($detail['image']) && $detail['image']->isValid()) {
@@ -72,9 +77,11 @@ class PurchaseVoucherController extends Controller
 
             DB::commit();
             return redirect()->route('purchase-vouchers.index')->with('success', 'Purchase Voucher created successfully.');
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
-            return back()->withErrors('Failed to create voucher. ' . $e->getMessage())->withInput();
+            return back()
+                ->withErrors(['error' => 'Failed to create voucher: ' . $e->getMessage()])
+                ->withInput();
         }
     }
 
@@ -84,15 +91,21 @@ class PurchaseVoucherController extends Controller
         return view('purchase-voucher.show', compact('purchaseVoucher'));
     }
 
-    public function edit(PurchaseVoucher $purchaseVoucher)
-    {
-        $services = Service::all();
-        $coas = ChartOfAccounts::all();
-        $projects = Project::all();
-        $purchaseVoucher->load('details');
+public function edit(PurchaseVoucher $purchaseVoucher)
+{
+    $purchaseVoucher->load('details');
 
-        return view('purchase-voucher.edit', compact('purchaseVoucher', 'services', 'coas', 'projects'));
-    }
+    $coas = ChartOfAccounts::all();
+    $projects = Project::all();
+    $services = Service::all();
+
+    return view('purchase-voucher.edit', [
+        'voucher' => $purchaseVoucher,
+        'coas' => $coas,
+        'projects' => $projects,
+        'services' => $services,
+    ]);
+}
 
     public function update(Request $request, PurchaseVoucher $purchaseVoucher)
     {

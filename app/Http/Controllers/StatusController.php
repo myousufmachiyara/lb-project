@@ -2,26 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProjectStatus;
+use App\Models\Status;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Exception;
 
-class ProjectStatusController extends Controller
+class StatusController extends Controller
 {
-    /**
-     * Display a listing of project statuses.
-     */
     public function index()
     {
         try {
-            Log::info('Entering ProjectStatusController@index method');
-            $statuses = ProjectStatus::all();
+            Log::info('Entering StatusController@index method');
+            $statuses = Status::all();
             Log::info('Successfully fetched project statuses');
-            return view('projects.status', compact('statuses'));
+            return view('others.status', compact('statuses'));
         } catch (\Exception $e) {
             Log::error('Failed to fetch project statuses: ' . $e->getMessage());
-            return redirect()->route('project-status.index')
+            return redirect()->route('status.index')
                              ->with('error', 'Failed to fetch project statuses')
                              ->withInput();  // Optionally return the previous input in case of error
         }
@@ -38,11 +35,11 @@ class ProjectStatusController extends Controller
                 'color' => 'required|string|max:7',
             ]);
 
-            $status = ProjectStatus::create($validated);
-            return redirect()->route('project-status.index')->with('success', 'Project Status created successfully');
+            $status = Status::create($validated);
+            return redirect()->route('status.index')->with('success', 'Project Status created successfully');
         } catch (\Exception $e) {
             Log::error('Failed to create project status: ' . $e->getMessage());
-            return redirect()->route('project-status.index')->with('error', 'Failed to create project status');
+            return redirect()->route('status.index')->with('error', 'Failed to create project status');
         }
     }
 
@@ -52,11 +49,11 @@ class ProjectStatusController extends Controller
     public function show($id)
     {
         try {
-            $status = ProjectStatus::findOrFail($id);
-            return view('project-status.show', compact('status'));
+            $status = Status::findOrFail($id);
+            return view('status.show', compact('status'));
         } catch (\Exception $e) {
             Log::error('Failed to fetch project status: ' . $e->getMessage());
-            return redirect()->route('project-status.index')->with('error', 'Project status not found');
+            return redirect()->route('status.index')->with('error', 'Project status not found');
         }
     }
 
@@ -66,11 +63,11 @@ class ProjectStatusController extends Controller
     public function edit($id)
     {
         try {
-            $status = ProjectStatus::findOrFail($id);
-            return view('project-status.edit', compact('status'));
+            $status = Status::findOrFail($id);
+            return view('status.edit', compact('status'));
         } catch (\Exception $e) {
             Log::error('Failed to fetch project status for editing: ' . $e->getMessage());
-            return redirect()->route('project-status.index')->with('error', 'Failed to fetch project status');
+            return redirect()->route('status.index')->with('error', 'Failed to fetch project status');
         }
     }
 
@@ -84,10 +81,10 @@ class ProjectStatusController extends Controller
             'color' => 'required|string|max:7',
         ]);
     
-        $status = ProjectStatus::findOrFail($id);
+        $status = Status::findOrFail($id);
         $status->update($request->only(['name', 'color']));
     
-        return redirect()->route('project-status.index')->with('success', 'Project Status updated successfully');
+        return redirect()->route('status.index')->with('success', 'Project Status updated successfully');
     }
 
     /**
@@ -96,18 +93,18 @@ class ProjectStatusController extends Controller
     public function destroy($id)
     {
         try {
-            $status = ProjectStatus::findOrFail($id);
+            $status = Status::findOrFail($id);
             $status->delete();
-            return redirect()->route('project-status.index')->with('success', 'Project Status deleted successfully');
+            return redirect()->route('status.index')->with('success', 'Project Status deleted successfully');
         } catch (\Exception $e) {
             Log::error('Failed to delete project status: ' . $e->getMessage());
-            return redirect()->route('project-status.index')->with('error', 'Failed to delete project status');
+            return redirect()->route('status.index')->with('error', 'Failed to delete project status');
         }
     }
 
     public function showJson($id)
     {
-        $status = ProjectStatus::findOrFail($id);
+        $status = Status::findOrFail($id);
         return response()->json($status);
     }
 }

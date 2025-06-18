@@ -21,7 +21,7 @@ return new class extends Migration
             $table->timestamps();
 
             // $table->foreign('acc_id')->references('id')->on('chart_of_accounts')->onDelete('cascade');
-            $table->foreign('status_id')->references('id')->on('project_status')->onDelete('cascade');
+            $table->foreign('status_id')->references('id')->on('status')->onDelete('cascade');
         });
     }
 

@@ -94,9 +94,9 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <a class="text-success showPcsBtn mx-1" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-eye"></i></a>
+                                        <a href="{{ route('project.costing', $project->id) }}" target="_blank" class="text-primary"><i class="fa fa-newspaper"></i></a>
                                         <a class="text-success showPcsBtn mx-1" data-name="{{ $project->name }}" data-id="{{ $project->id }}"><i class="fa fa-plus"></i></a>
-                                        <a href="{{ route('projects.edit', $project->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
+                                        <a href="{{ route('projects.edit', $project->id) }}" class="text-warning"><i class="fa fa-edit"></i></a>
                                         <form action="{{ route('projects.destroy', $project->id) }}" method="POST" style="display:inline;">
                                             @csrf
                                             @method('DELETE')

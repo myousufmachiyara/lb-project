@@ -15,7 +15,7 @@ class PurchaseVoucher extends Model
 
     public function coa()
     {
-        return $this->belongsTo(ChartOfAccount::class, 'coa_id');
+        return $this->belongsTo(ChartOfAccounts::class, 'coa_id');
     }
 
     public function user()

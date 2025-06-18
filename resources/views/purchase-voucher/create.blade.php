@@ -8,51 +8,55 @@
     <form action="{{ route('purchase-vouchers.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <section class="card">
-            @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-            @elseif (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-            @endif
+          @if ($errors->any())
+            <div class="alert alert-danger">
+              <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                  <li>{{ $error }}</li>
+                @endforeach
+              </ul>
+            </div>
+          @endif
 
-            <header class="card-header d-flex justify-content-between">
-              <h2 class="card-title">New Purchase Voucher</h2>
-            </header>
+          <header class="card-header d-flex justify-content-between">
+            <h2 class="card-title">New Purchase Voucher</h2>
+          </header>
 
-            <div class="card-body">
-              <div class="row">
-                <div class="col-md-3 mb-3">
-                  <label>Voucher ID</label>
-                  <input type="text" name="voucher_id" class="form-control" required value="{{ old('voucher_id') }}">
-                  @error('voucher_id')<div class="text-danger">{{ $message }}</div>@enderror
-                </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label>Voucher ID</label>
+                <input type="text" name="voucher_id" class="form-control" required value="{{ old('voucher_id') }}" disabled>
+                @error('voucher_id')<div class="text-danger">{{ $message }}</div>@enderror
+              </div>
 
-                <div class="col-md-3 mb-3">
-                  <label>Vendor / COA</label>
-                  <select name="coa_id" class="form-control" required>
-                    <option value="" selected disabled>Select Vendor</option>
-                    @foreach ($coas as $coa)
-                      <option value="{{ $coa->id }}">{{ $coa->name }}</option>
-                    @endforeach
-                  </select>
-                  @error('coa_id')<div class="text-danger">{{ $message }}</div>@enderror
-                </div>
+              <div class="col-md-3 mb-3">
+                <label>Vendor / COA</label>
+                <select name="coa_id" class="form-control" required>
+                  <option value="" selected disabled>Select Vendor</option>
+                  @foreach ($coas as $coa)
+                    <option value="{{ $coa->id }}">{{ $coa->name }}</option>
+                  @endforeach
+                </select>
+                @error('coa_id')<div class="text-danger">{{ $message }}</div>@enderror
+              </div>
 
-                <div class="col-md-3 mb-3">
-                  <label>Date</label>
-                  <input type="date" name="date" class="form-control" value="{{ old('date', now()->format('Y-m-d')) }}" required>
-                  @error('date')<div class="text-danger">{{ $message }}</div>@enderror
-                </div>
+              <div class="col-md-3 mb-3">
+                <label>Date</label>
+                <input type="date" name="date" class="form-control" value="{{ old('date', now()->format('Y-m-d')) }}" required>
+                @error('date')<div class="text-danger">{{ $message }}</div>@enderror
+              </div>
 
-                <div class="col-md-3 mb-3">
-                  <label>Status</label>
-                  <select name="status" class="form-control" required>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                  </select>
-                  @error('status')<div class="text-danger">{{ $message }}</div>@enderror
-                </div>
+              <div class="col-md-3 mb-3">
+                <label>Status</label>
+                <select name="status" class="form-control" required>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                </select>
+                @error('status')<div class="text-danger">{{ $message }}</div>@enderror
               </div>
             </div>
+          </div>
         </section>
 
         <section class="card mt-3">

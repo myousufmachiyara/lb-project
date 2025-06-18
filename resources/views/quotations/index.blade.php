@@ -39,6 +39,7 @@
                                         <td>{{ $quotation->customer_name }}</td>
                                         <td>{{ $quotation->date }}</td>
                                         <td>
+                                            <a href="{{ route('quotations.print', $quotation->id) }}" target="_blank" class="text-success"><i class="fa fa-print"></i></a>
                                             <a href="{{ route('quotations.edit', $quotation->id) }}" class="text-primary"><i class="fa fa-edit"></i></a>
                                             <form action="{{ route('quotations.destroy', $quotation->id) }}" method="POST" style="display:inline-block;">
                                                 @csrf

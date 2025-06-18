@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Project, ChartOfAccounts, ProjectStatus, ProjectAttachment, ProjectPcsInOut, TaskCategory, Task};
+use App\Models\{Project, PurchaseVoucherDetail ,ChartOfAccounts, Status, ProjectAttachment, Service, ProjectPcsInOut, TaskCategory, Task};
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\{Log, Storage};
 use Exception;
@@ -29,7 +29,7 @@ class ProjectController extends Controller
                 };
             })->values(); // Reindex
 
-            $statuses = ProjectStatus::all();
+            $statuses = Status::all();
 
             return view('projects.index', compact('projects', 'statuses'));
         } catch (\Exception $e) {
@@ -42,7 +42,7 @@ class ProjectController extends Controller
     {
         try {
             // $accounts = ChartOfAccounts::all();
-            $projectStatuses = ProjectStatus::all();
+            $projectStatuses = Status::all();
             $taskCat = TaskCategory::all();
 
             return view('projects.create', [
@@ -56,13 +56,25 @@ class ProjectController extends Controller
         }
     }
 
+    public function costingForm($id)
+    {
+        $project = Project::findOrFail($id);
+        $services = Service::all();
+
+        // Fetch all purchase voucher details for this project
+        $purchaseDetails = PurchaseVoucherDetail::where('project_id', $id)->get();
+
+        return view('projects.costing', compact('project', 'purchaseDetails', 'services'));
+    }
+
+
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'total_pcs' => 'required|integer|min:1',
-            'status_id' => 'required|exists:project_status,id',
+            'status_id' => 'required|exists:status,id',
             'attachments.*' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:20480',
             'tasks' => 'nullable|array|min:1',
             'tasks.*.task_name' => 'nullable|string|max:255',
@@ -70,7 +82,7 @@ class ProjectController extends Controller
             'tasks.*.due_date' => 'nullable|date',
             'tasks.*.due_time' => 'nullable|date_format:H:i',
             'tasks.*.category_id' => 'nullable|exists:task_categories,id',
-            'tasks.*.status_id' => 'nullable|exists:project_status,id',
+            'tasks.*.status_id' => 'nullable|exists:status,id',
             'tasks.*.sort_order' => 'nullable|integer',
         ]);
 
@@ -119,6 +131,48 @@ class ProjectController extends Controller
         }
     }
 
+    public function storeCosting(Request $request, $project_id)
+    {
+        $request->validate([
+            'date' => 'required|date',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $project = Project::findOrFail($project_id);
+        $services = Service::all();
+
+        // Get all purchase voucher details for this project
+        $purchaseDetails = PurchaseVoucherDetail::where('project_id', $project_id)->get();
+
+        // Create costing record
+        $costing = ProjectCosting::create([
+            'project_id' => $project->id,
+            'date' => $request->date,
+            'remarks' => $request->remarks,
+        ]);
+
+        foreach ($purchaseDetails as $detail) {
+            $service = $services->firstWhere('name', $detail->service);
+            if (!$service) continue;
+
+            $percentage = $service->charges_per_pc ?? 0;
+            $totalRate = $detail->rate + ($detail->rate * $percentage / 100);
+            $totalAmount = $totalRate * $detail->qty;
+
+            ProjectCostingDetail::create([
+                'project_costing_id' => $costing->id,
+                'purchase_voucher_detail_id' => $detail->id,
+                'service' => $detail->service,
+                'qty' => $detail->qty,
+                'rate' => $detail->rate,
+                'service_percentage' => $percentage,
+                'total_rate' => $totalRate,
+                'total_amount' => $totalAmount,
+            ]);
+        }
+
+        return redirect()->route('projects.show', $project_id)->with('success', 'Project costing saved successfully.');
+    }
 
     public function edit($id)
     {
@@ -131,7 +185,7 @@ class ProjectController extends Controller
                 }
             ])->findOrFail($id);
 
-            $statuses = ProjectStatus::all();
+            $statuses = Status::all();
             $taskCat = TaskCategory::all();
             $keptAttachmentIds = $project->attachments->pluck('id')->toArray();
 
@@ -192,7 +246,7 @@ class ProjectController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'total_pcs' => 'required|integer|min:1',
-                'status_id' => 'required|exists:project_status,id',
+                'status_id' => 'required|exists:status,id',
 
                 'tasks' => 'nullable|array',
                 'tasks.*.id' => 'nullable|exists:tasks,id',
@@ -201,7 +255,7 @@ class ProjectController extends Controller
                 'tasks.*.due_date' => 'nullable|date',
                 'tasks.*.due_time' => 'nullable|date_format:H:i',
                 'tasks.*.category_id' => 'nullable|exists:task_categories,id',
-                'tasks.*.status_id' => 'nullable|exists:project_status,id',
+                'tasks.*.status_id' => 'nullable|exists:status,id',
                 'tasks.*.sort_order' => 'nullable|integer',
             ]);
 
@@ -285,7 +339,7 @@ class ProjectController extends Controller
         $request->validate([
             'project_ids' => 'required|array',
             'project_ids.*' => 'exists:projects,id',
-            'status_id' => 'required|exists:project_status,id',
+            'status_id' => 'required|exists:status,id',
         ]);
 
         Project::whereIn('id', $request->project_ids)->update(['status_id' => $request->status_id]);
