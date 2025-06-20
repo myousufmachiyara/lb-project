@@ -17,6 +17,7 @@ use App\Http\Controllers\ModuleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\PurchaseVoucherController;
+use App\Http\Controllers\GatepassController;
 
 // Auth routes (login, register, forgot password)
 Auth::routes();
@@ -69,6 +70,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/tasks/{id}/complete', [TaskController::class, 'markComplete'])->name('tasks.complete');
     Route::post('/tasks/bulk-complete', [TaskController::class, 'bulkComplete'])->name('tasks.bulk-complete');
     Route::post('/tasks/bulk-delete', [TaskController::class, 'bulkDelete'])->name('tasks.bulk-delete');
+
+    // Gatepass
+    Route::resource('gatepass', GatepassController::class);
+    Route::get('gatepass/{id}/print', [GatepassController::class, 'print'])->name('gatepass.print');
 
     // Purchase Vouchers
     Route::resource('purchase-vouchers', PurchaseVoucherController::class);

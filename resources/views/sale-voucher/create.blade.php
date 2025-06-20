@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Quotation | New Quotation')
+@section('title', 'Sales | New Voucher')
 
 @section('content')
 <div class="row">
@@ -15,7 +15,7 @@
             @endif
 
             <header class="card-header" style="display: flex; justify-content: space-between;">
-            <h2 class="card-title">New Quotation</h2>
+            <h2 class="card-title">New Voucher</h2>
             </header>
 
             <div class="card-body">
@@ -36,7 +36,7 @@
 
         <section class="card mt-3">
             <header class="card-header" style="display: flex; justify-content: space-between;">
-            <h2 class="card-title">Quotation Details</h2>
+            <h2 class="card-title">Voucher Details</h2>
             </header>
 
             <div class="card-body" style="max-height: 500px; overflow-y: auto">

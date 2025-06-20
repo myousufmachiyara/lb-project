@@ -59,6 +59,14 @@
           </li>
           @endif
 
+          @if(auth()->user()->can('quotations.index'))
+          <li>
+            <a class="nav-link" href="{{ route('quotations.index') }}">
+              <i class="fa fa-file"></i><span>Quotations</span>
+            </a>
+          </li>
+          @endif
+
           @if(auth()->user()->can('projects.index'))
           <li>
             <a class="nav-link" href="{{ route('projects.index') }}">
@@ -81,13 +89,13 @@
           </li>
           @endif
 
-          @if(auth()->user()->can('quotations.index'))
-          <li>
-            <a class="nav-link" href="{{ route('quotations.index') }}">
-              <i class="fa fa-file"></i><span>Quotations</span>
-            </a>
-          </li>
-          @endif
+          @if(auth()->user()->can('gate_pass.index'))
+            <li>
+              <a class="nav-link" href="{{ route('gatepass.index') }}">
+                <i class="fa fa-clipboard"></i><span>GatePass</span>
+              </a>
+            </li>
+          @endif  
 
           @if(auth()->user()->can('purchase_vouchers.index'))
           <li>
@@ -103,15 +111,7 @@
               <i class="fa fa-file-export"></i><span>Sale Vouchers</span>
             </a>
           </li>
-          @endif 
-          
-          @if(auth()->user()->can('gate_pass.index'))
-            <li>
-              <a class="nav-link" href="">
-                <i class="fa fa-clipboard"></i><span>GatePass</span>
-              </a>
-            </li>
-          @endif      
+          @endif     
 
           @if(auth()->user()->can('payment_vouchers.index'))
           <li>

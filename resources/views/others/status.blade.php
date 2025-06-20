@@ -40,7 +40,7 @@
                     <td><span style="background-color: {{ $item->color }}; color: white;">{{ $item->color }}</span></td>
                     <td>
                         <a class="text-primary editStatusBtn" data-id="{{ $item->id }}"><i class="fa fa-edit"></i></a>
-                        <form action="{{ route('project-status.destroy', $item->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('status.destroy', $item->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button class="text-danger bg-transparent" style="border:none" onclick="return confirm('Are you sure?')"><i class="fa fa-trash"></i></button>
@@ -57,7 +57,7 @@
       <!-- Add Project Status Modal -->
       <div id="addModal" class="modal-block modal-block-primary mfp-hide">
         <section class="card">
-          <form method="post" action="{{ route('project-status.store') }}" enctype="multipart/form-data" onkeydown="return event.key != 'Enter';">
+          <form method="post" action="{{ route('status.store') }}" enctype="multipart/form-data" onkeydown="return event.key != 'Enter';">
             @csrf
             <header class="card-header">
                 <h2 class="card-title">New Project Status</h2>
@@ -126,7 +126,7 @@
 
         // Fetch status data via AJAX
         $.ajax({
-          url: `/project-status/${statusId}/json`,
+          url: `/status/${statusId}/json`,
           method: 'GET',
           success: function (data) {
             $('#update_status_id').val(data.id);
@@ -135,7 +135,7 @@
             $('#status_id').val(data.id);
 
             // Set form action dynamically
-            const formAction = `/project-status/${data.id}`;
+            const formAction = `/status/${data.id}`;
             $('#updateModal form').attr('action', formAction);
             $('#updateModal form').append('<input type="hidden" name="_method" value="PUT">');
 
