@@ -25,12 +25,13 @@
                         <tr>
                             <th>S.NO</th>
                             <th>Account Name</th>
+                            <th>Account Type</th>
                             <th>Receivable</th>
                             <th>Payable</th>
                             <th>Date</th>
                             <th>Remarks</th>
                             <th>Address</th>
-                            <th>Account Type</th>
+                            <th>SubHead</th>
                             <th>Att.</th>
                             <th>Action</th>
                         </tr>
@@ -40,6 +41,7 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td><strong>{{ $item->name }}</strong></td>
+                            <td><strong>{{ $item->account_type }}</strong></td>
                             @if (substr(strval($item->receivables), strpos(strval($item->receivables), '.') + 1) > 0)
                             <td>{{ rtrim(rtrim(number_format($item->receivables, 10, '.', ','), '0'), '.') }}</td>
                             @else
@@ -89,9 +91,17 @@
                             <input type="text" class="form-control" placeholder="Account Name" name="name" required>
                         </div>
                         <div class="col-lg-6 mb-2">
-                            <label>Account Type<span style="color: red;"><strong>*</strong></span></label>
+                            <label>Account Type</label>
+                            <select data-plugin-selecttwo class="form-control select2-js"  name="account_type">
+                                <option value="" selected>Select Account Type</option>
+                                <option value="customer">Customer</option>
+                                <option value="vendor">Vendor</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-6 mb-2">
+                            <label>SubHead Of Account<span style="color: red;"><strong>*</strong></span></label>
                             <select data-plugin-selecttwo class="form-control select2-js"  name="shoa_id" required>
-                                <option value="" disabled selected>Select Account Type</option>
+                                <option value="" disabled selected>Select Account SubHead</option>
                                 @foreach($subHeadOfAccounts as $key => $row)	
                                     <option value="{{$row->id}}">{{$row->name}}</option>
                                 @endforeach
@@ -121,7 +131,7 @@
                             <label>Phone No.</label>
                             <input type="text" class="form-control"  placeholder="Phone No." name="phone_no" >
                         </div>
-                        <div class="col-lg-12 mb-2">
+                        <div class="col-lg-6 mb-2">
                             <label>Attachement</label>
                             <input type="file" class="form-control" name="att[]" multiple accept="application/pdf, image/png, image/jpeg">
                         </div>

@@ -39,7 +39,7 @@ class QuotationController extends Controller
             'details.*.unit' => 'required|string|max:50',
             'details.*.cost' => 'required|numeric|min:0',
             'details.*.service_charges_per_pc' => 'required|numeric|min:0|max:100',
-            'details.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'details.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
         ]);
 
         DB::beginTransaction();
@@ -103,7 +103,7 @@ class QuotationController extends Controller
             'details.*.unit' => 'required|string|max:50',
             'details.*.cost' => 'required|numeric|min:0',
             'details.*.service_charges_per_pc' => 'nullable|numeric|min:0|max:100',
-            'details.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+            'details.*.image' => 'nullable|image|mimes:jpeg,png,jpg,gif'
         ]);
 
         DB::beginTransaction();
@@ -166,25 +166,25 @@ class QuotationController extends Controller
 
     public function print($id)
     {
-        $gatepass = Gatepass::with('vendor', 'details.project', 'details')->findOrFail($id);
+        $quotation = Quotation::with('details.service')->findOrFail($id);
 
         $pdf = new \TCPDF();
 
-        $pdf->SetTitle('Gatepass - ' . $gatepass->vendor->name);
+        $pdf->SetTitle('Quotation - ' . $quotation->customer_name);
         $pdf->SetMargins(10, 10, 10);
         $pdf->AddPage();
 
         // Logo + Header
-        $logo = public_path('images/company-logo.png'); // Update path to your logo
+        $logo = public_path('images/company-logo.png'); // Update with correct logo path
         $html = '
             <div style="text-align: center;">
                 <img src="' . $logo . '" height="60"><br>
-                <h2>Gatepass</h2>
+                <h2>Quotation</h2>
             </div>
             <table cellspacing="0" cellpadding="4">
                 <tr>
-                    <td><strong>Vendor:</strong> ' . $gatepass->vendor->name . '</td>
-                    <td align="right"><strong>Date:</strong> ' . $gatepass->date . '</td>
+                    <td><strong>Customer Name:</strong> ' . $quotation->customer_name . '</td>
+                    <td align="right"><strong>Date:</strong> ' . $quotation->date . '</td>
                 </tr>
             </table>
             <br><br>
@@ -192,44 +192,49 @@ class QuotationController extends Controller
                 <thead>
                     <tr style="background-color: #f5f5f5;font-weight:bold">
                         <th width="5%">#</th>
-                        <th width="20%">Project</th>
-                        <th width="20%">Service</th>
+                        <th width="25%">Service</th>
                         <th width="25%">Description</th>
-                        <th width="8%">Qty</th>
-                        <th width="7%">Unit</th>
-                        <th width="15%">Rate</th>
+                        <th width="10%">Qty</th>
+                        <th width="10%">Unit</th>
+                        <th width="10%">Cost</th>
+                        <th width="15%">Total</th>
                     </tr>
                 </thead>
                 <tbody>';
 
-        foreach ($gatepass->details as $index => $detail) {
+        foreach ($quotation->details as $index => $detail) {
+            $cost = $detail->quantity * $detail->cost;
+            $charges = $cost * ($detail->service_charges_per_pc / 100);
+            $total = $cost + $charges;
+
             $html .= '
                 <tr>
                     <td width="5%">' . ($index + 1) . '</td>
-                    <td width="20%">' . ($detail->project->name ?? '-') . '</td>
-                    <td width="20%">' . ($detail->service ?? '-') . '</td>
+                    <td width="25%">' . ($detail->service->name ?? '-') . '</td>
                     <td width="25%">' . ($detail->description ?? '-') . '</td>
-                    <td width="8%" align="center">' . $detail->qty . '</td>
-                    <td width="7%" align="center">' . $detail->unit . '</td>
-                    <td width="15%" align="right">' . number_format($detail->rate, 2) . '</td>
+                    <td width="10%" align="center">' . $detail->quantity . '</td>
+                    <td width="10%" align="center">' . $detail->unit . '</td>
+                    <td width="10%" align="right">' . number_format($detail->cost, 2) . '</td>
+                    <td width="15%" align="right">' . number_format($total, 2) . '</td>
                 </tr>';
         }
 
         $html .= '</tbody></table><br><br>';
 
+        // Write main content
         $pdf->writeHTML($html, true, false, true, false, '');
 
-        // Signature
+        // Move to bottom for signature block
         $pdf->SetY(-40);
         $signatureHtml = '
             <table width="100%" cellpadding="4">
                 <tr>
-                    <td align="right"><strong>Authorized By:</strong> ____________________</td>
+                    <td align="right"><strong>Approved By:</strong> ____________________</td>
                 </tr>
             </table>';
         $pdf->writeHTML($signatureHtml, true, false, true, false, '');
 
         $pdf->lastPage();
-        return $pdf->Output('gatepass-' . $gatepass->id . '.pdf', 'I');
+        return $pdf->Output('quotation-' . $quotation->id . '.pdf', 'I');
     }
 }

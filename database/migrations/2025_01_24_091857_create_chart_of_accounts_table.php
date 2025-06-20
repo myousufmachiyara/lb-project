@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id(); // Auto-increment primary key
             $table->unsignedBigInteger('shoa_id'); // Foreign key for sub_head_of_accounts
             $table->string('name'); // Name of the account
+            $table->string('account_type')->nullable();
             $table->double('receivables')->default(0); // Default value for receivables
             $table->double('payables')->default(0); // Default value for payables
             $table->date('opening_date'); // Opening date for the account

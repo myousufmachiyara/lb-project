@@ -45,6 +45,7 @@
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                                         </form>
+                                        <a href="{{ route('gatepass.print', $gatepass->id) }}" class="btn btn-sm btn-success">Print</a>
                                     </td>
                                 </tr>
                             @empty

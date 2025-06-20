@@ -23,6 +23,7 @@ class COAController extends Controller
             $request->validate([
                 'shoa_id' => 'required|exists:sub_head_of_accounts,id',
                 'name' => 'required|string|max:255|unique:chart_of_accounts',
+                'account_type' => 'nullable|string|max:255',
                 'receivables' => 'required|numeric',
                 'payables' => 'required|numeric',
                 'opening_date' => 'required|date',
@@ -51,6 +52,7 @@ class COAController extends Controller
         $request->validate([
             'shoa_id' => 'required|exists:sub_head_of_accounts,id',
             'name' => 'required|string|max:255',
+            'account_type' => 'nullable|string|max:255',
             'receivables' => 'required|numeric',
             'payables' => 'required|numeric',
             'opening_date' => 'required|date',

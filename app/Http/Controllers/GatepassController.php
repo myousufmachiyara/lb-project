@@ -22,7 +22,7 @@ class GatepassController extends Controller
 
     public function create()
     {
-        $coas = ChartOfAccounts::all();
+        $coas = ChartOfAccounts::where('account_type', 'vendor')->get();
         $projects = Project::all();
         $services = Service::all();
         return view('gatepass.create', compact('coas', 'projects', 'services'));
@@ -151,5 +151,74 @@ class GatepassController extends Controller
             Log::error('Gatepass deletion failed: ' . $e->getMessage());
             return redirect()->route('gatepass.index')->with('error', 'Failed to delete gatepass.');
         }
+    }
+
+    public function print($id)
+    {
+        $gatepass = Gatepass::with('coa', 'details.project', 'details')->findOrFail($id);
+
+        $pdf = new \TCPDF();
+
+        $pdf->SetTitle('Gatepass - ' . $gatepass->coa->name);
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->AddPage();
+
+        // Logo + Header
+        $logo = public_path('images/company-logo.png'); // Update path to your logo
+        $html = '
+            <div style="text-align: center;">
+                <img src="' . $logo . '" height="60"><br>
+                <h2>Gatepass</h2>
+            </div>
+            <table cellspacing="0" cellpadding="4">
+                <tr>
+                    <td><strong>Vendor:</strong> ' . $gatepass->coa->name . '</td>
+                    <td align="right"><strong>Date:</strong> ' . $gatepass->date . '</td>
+                </tr>
+            </table>
+            <br><br>
+            <table border="1" cellpadding="4" cellspacing="0">
+                <thead>
+                    <tr style="background-color: #f5f5f5;font-weight:bold">
+                        <th width="5%">#</th>
+                        <th width="20%">Project</th>
+                        <th width="20%">Service</th>
+                        <th width="25%">Description</th>
+                        <th width="8%">Qty</th>
+                        <th width="7%">Unit</th>
+                        <th width="15%">Rate</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        foreach ($gatepass->details as $index => $detail) {
+            $html .= '
+                <tr>
+                    <td width="5%">' . ($index + 1) . '</td>
+                    <td width="20%">' . ($detail->project->name ?? '-') . '</td>
+                    <td width="20%">' . ($detail->service->name ?? '-') . '</td>
+                    <td width="25%">' . ($detail->description ?? '-') . '</td>
+                    <td width="8%" align="center">' . $detail->qty . '</td>
+                    <td width="7%" align="center">' . $detail->unit . '</td>
+                    <td width="15%" align="right">' . number_format($detail->rate, 2) . '</td>
+                </tr>';
+        }
+
+        $html .= '</tbody></table><br><br>';
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        // Signature
+        $pdf->SetY(-40);
+        $signatureHtml = '
+            <table width="100%" cellpadding="4">
+                <tr>
+                    <td align="right"><strong>Authorized By:</strong> ____________________</td>
+                </tr>
+            </table>';
+        $pdf->writeHTML($signatureHtml, true, false, true, false, '');
+
+        $pdf->lastPage();
+        return $pdf->Output('gatepass-' . $gatepass->id . '.pdf', 'I');
     }
 }
