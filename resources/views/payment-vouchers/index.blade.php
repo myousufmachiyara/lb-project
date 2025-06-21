@@ -26,7 +26,6 @@
                         <th width="15%">Account Credit</th>
                         <th width="30%">Remarks</th>
                         <th>Amount</th>
-                        <th>Att.</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -35,30 +34,25 @@
                         <tr>
                             <td>{{$row->id}}</td>
                             <td>{{ \Carbon\Carbon::parse($row->date)->format('d-m-y') }}</td>
-                            <td>{{$row->debit_account}}</td>
-                            <td>{{$row->credit_account}}</td>
+                            <td>{{ $row->debitAccount->name ?? 'N/A' }}</td>
+                            <td>{{ $row->creditAccount->name ?? 'N/A' }}</td>
                             <td >{{$row->remarks}}</td>
                             @if (strpos($row->amount, '.') !== false && substr($row->amount, strpos($row->amount, '.') + 1) > '0')
                                 <td><strong style="font-size:15px">{{ number_format($row->amount, 0, '.', ',') }}</strong></td>
                             @else
                                 <td><strong style="font-size:15px">{{ number_format($row->amount, 0, '.', ',') }}</strong></td>
                             @endif
-                            <td style="vertical-align: middle;">
-                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal text-dark" onclick="getAttachements({{$row->auto_lager}})" href="#attModal"><i class="fa fa-eye"> </i></a>
-                                <span class="separator"> | </span>
-                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal text-danger" onclick="setAttId({{$row->auto_lager}})" href="#addAttModal"> <i class="fas fa-paperclip"> </i></a>
-                            </td>
                             <td class="actions">
                                 <a class="mb-1 mt-1 me-1" href="{{ route('payment-vouchers.show', $row->id) }}">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 <span class="separator"> | </span>
-                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal modal-with-form" onclick="getJVSDetails({{$row->auto_lager}})" href="#updateModal">
+                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal modal-with-form" onclick="getJVSDetails({{$row->id}})" href="#updateModal">
                                     <i class="fas fa-pencil-alt"></i>
                                 </a>
                                 @if(session('user_role')==1)
                                 <span class="separator"> | </span>
-                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal" onclick="setId({{$row->auto_lager}})" href="#deleteModal">
+                                <a class="mb-1 mt-1 me-1 modal-with-zoom-anim ws-normal" onclick="setId({{$row->id}})" href="#deleteModal">
                                     <i class="far fa-trash-alt" style="color:red"></i>
                                 </a>
                                 @endif
@@ -100,7 +94,7 @@
                             <select class="form-control select2-js" name="ac_dr_sid" id="update_ac_dr_sid" required>
                                 <option value="" disabled selected>Select Account</option>
                                 @foreach($acc as $row)
-                                    <option value="{{ $row->ac_code }}">{{ $row->ac_name }}</option>
+                                    <option value="{{ $row->id }}">{{ $row->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -109,7 +103,7 @@
                             <select class="form-control select2-js" name="ac_cr_sid" id="update_ac_cr_sid" required>
                                 <option value="" disabled selected>Select Account</option>
                                 @foreach($acc as $row)
-                                    <option value="{{ $row->ac_code }}">{{ $row->ac_name }}</option>
+                                    <option value="{{ $row->id }}">{{ $row->name }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -208,27 +202,28 @@
   </div>
 </div>
 <script>
-function getJVSDetails(id) {
-    // Set the form action
-    document.getElementById('updateForm').action = `/payment-vouchers/${id}`;
+    function getJVSDetails(id) {
+        // Set the form action
+        document.getElementById('updateForm').action = `/payment-vouchers/${id}`;
 
-    // Fetch existing voucher data via AJAX
-    fetch(`/payment-vouchers/${id}`)
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById('update_id').value = id;
-            document.getElementById('update_id_hidden').value = id;
-            document.getElementById('update_date').value = data.date;
-            document.getElementById('update_ac_dr_sid').value = data.ac_dr_sid;
-            document.getElementById('update_ac_cr_sid').value = data.ac_cr_sid;
-            document.getElementById('update_amount').value = data.amount;
-            document.getElementById('update_remarks').value = data.remarks;
+        // Fetch existing voucher data via AJAX
+        fetch(`/payment-vouchers/${id}`)
+            .then(res => res.json())
+            .then(data => {
+                console.log(data);
+                document.getElementById('update_id').value = id;
+                document.getElementById('update_id_hidden').value = id;
+                document.getElementById('update_date').value = data.date;
+                document.getElementById('update_ac_dr_sid').value = data.ac_dr_sid;
+                document.getElementById('update_ac_cr_sid').value = data.ac_cr_sid;
+                document.getElementById('update_amount').value = data.amount;
+                document.getElementById('update_remarks').value = data.remarks;
 
-            // If you're using select2, trigger change
-            $('#update_ac_dr_sid').val(data.ac_dr_sid).trigger('change');
-            $('#update_ac_cr_sid').val(data.ac_cr_sid).trigger('change');
-        })
-        .catch(err => console.error('Failed to load voucher:', err));
-}
+                // If you're using select2, trigger change
+                $('#update_ac_dr_sid').val(data.ac_dr_sid).trigger('change');
+                $('#update_ac_cr_sid').val(data.ac_cr_sid).trigger('change');
+            })
+            .catch(err => console.error('Failed to load voucher:', err));
+    }
 </script>
 @endsection
