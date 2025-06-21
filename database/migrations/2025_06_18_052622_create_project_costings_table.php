@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('project_costings', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('project_id');
+            $table->unsignedBigInteger('created_by');
+            $table->date('date');
             $table->timestamps();
+            $table->softDeletes();
+
+            $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
         });
     }
 

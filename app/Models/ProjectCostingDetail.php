@@ -6,19 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProjectCostingDetail extends Model
 {
-    protected $fillable = [
-        'project_costing_id', 'purchase_voucher_detail_id', 'service',
-        'qty', 'rate', 'service_percentage', 'total_rate', 'total_amount'
-    ];
+    protected $fillable = ['project_costing_id', 'service_id', 'description', 'qty', 'rate', 'service_percent'];
 
     public function costing()
     {
-        return $this->belongsTo(ProjectCosting::class);
+        return $this->belongsTo(ProjectCosting::class, 'project_costing_id');
     }
 
-    public function purchaseDetail()
+    public function service()
     {
-        return $this->belongsTo(PurchaseVoucherDetail::class);
+        return $this->belongsTo(Service::class);
     }
-
 }

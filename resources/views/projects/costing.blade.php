@@ -8,7 +8,7 @@
     <form action="{{ route('projects.costing.store', $project->id) }}" method="POST">
       @csrf
       <section class="card">
-        <header class="card-header d-flex justify-content-between">
+        <header class="card-header">
           <h2 class="card-title">Project Costing for: {{ $project->name }}</h2>
         </header>
 
@@ -34,7 +34,7 @@
             </div>
           </div>
 
-          <div class="table-responsive mt-4">
+          <div class="table-responsive">
             <table class="table table-bordered">
               <thead>
                 <tr>
@@ -42,17 +42,15 @@
                   <th>Service</th>
                   <th>Description</th>
                   <th>Qty</th>
-                  <th>Rate</th>
+                  <th>Base Rate</th>
                   <th>Service %</th>
                   <th>Total Rate</th>
                   <th>Total Amount</th>
                 </tr>
               </thead>
               <tbody>
-                @php
-                  $grandTotal = 0;
-                @endphp
-                @foreach ($purchaseDetails as $detail)
+                @php $grandTotal = 0; @endphp
+                @foreach ($purchaseDetails as $index => $detail)
                   @php
                     $service = $services->firstWhere('name', $detail->service);
                     $percentage = $service->charges_per_pc ?? 0;
@@ -60,10 +58,18 @@
                     $totalAmount = $totalRate * $detail->qty;
                     $grandTotal += $totalAmount;
                   @endphp
+
+                  <!-- Hidden inputs to send with form -->
+                  <input type="hidden" name="details[{{ $index }}][service_id]" value="{{ $service->id }}">
+                  <input type="hidden" name="details[{{ $index }}][description]" value="{{ $detail->description }}">
+                  <input type="hidden" name="details[{{ $index }}][qty]" value="{{ $detail->qty }}">
+                  <input type="hidden" name="details[{{ $index }}][rate]" value="{{ $detail->rate }}">
+                  <input type="hidden" name="details[{{ $index }}][service_percent]" value="{{ $percentage }}">
+
                   <tr>
                     <td>
                       @if ($detail->image)
-                        <img src="{{ asset('storage/' . $detail->image) }}" alt="img" width="50">
+                        <img src="{{ asset('storage/' . $detail->image) }}" width="50">
                       @else
                         N/A
                       @endif

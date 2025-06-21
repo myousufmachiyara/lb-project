@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PurchaseVoucherDetail extends Model
 {
-    protected $fillable = ['purchase_voucher_id', 'project_id', 'service', 'description', 'image', 'qty', 'unit', 'rate'];
+    protected $fillable = ['purchase_voucher_id', 'project_id', 'service_id', 'description', 'image', 'qty', 'unit', 'rate'];
 
     public function voucher()
     {
@@ -18,4 +18,8 @@ class PurchaseVoucherDetail extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function service()
+    {
+        return $this->belongsTo(Service::class);
+    }
 }

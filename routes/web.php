@@ -18,6 +18,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\PurchaseVoucherController;
 use App\Http\Controllers\GatepassController;
+use App\Http\Controllers\PaymentVoucherController;
 
 // Auth routes (login, register, forgot password)
 Auth::routes();
@@ -60,6 +61,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('project-pcs-delete/{id}', [ProjectController::class, 'deletePcs'])->name('project-pcs-delete');
     Route::post('/projects/bulk-status-update', [ProjectController::class, 'bulkStatusUpdate'])->name('projects.bulk-status-update');
     Route::post('/projects/bulk-delete', [ProjectController::class, 'bulkDelete'])->name('projects.bulk-delete');
+    Route::get('/projects/{project}/costing/create', [ProjectCostingController::class, 'create'])->name('projects.costing.create');
+    Route::post('/projects/{project}/costing', [ProjectCostingController::class, 'store'])->name('projects.costing.store');
 
     // Task
     Route::resource('task-categories', TaskCategoryController::class);
@@ -90,5 +93,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('quotations/{id}/print', [QuotationController::class, 'print'])->name('quotations.print');
 
     // Payment Vouchers
-    Route::resource('payment-vouchers', \App\Http\Controllers\PaymentVoucherController::class);
+    Route::resource('payment-vouchers', PaymentVoucherController::class);
 });

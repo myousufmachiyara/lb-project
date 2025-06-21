@@ -18,6 +18,7 @@ return new class extends Migration
             $table->integer('total_pcs');
             $table->text('description'); // Added description field
             $table->unsignedBigInteger('status_id');
+            $table->boolean('is_billed')->default(false);
             $table->timestamps();
 
             // $table->foreign('acc_id')->references('id')->on('chart_of_accounts')->onDelete('cascade');

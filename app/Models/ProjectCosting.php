@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProjectCosting extends Model
 {
-    protected $fillable = ['project_id', 'date', 'remarks'];
+    protected $table = 'project_costings';
+    protected $fillable = ['project_id', 'created_by', 'date'];
 
     public function details()
     {
@@ -16,5 +17,10 @@ class ProjectCosting extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'created_by');
     }
 }

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('purchase_voucher_id');
             $table->unsignedBigInteger('project_id');
-            $table->string('service');
+            $table->unsignedBigInteger('service_id');
             $table->text('description')->nullable();
             $table->string('image')->nullable();
             $table->integer('qty');
@@ -23,6 +23,7 @@ return new class extends Migration
             $table->decimal('rate', 12, 2);
             $table->timestamps();
 
+            $table->foreign('service_id')->references('id')->on('services')->onDelete('cascade');
             $table->foreign('purchase_voucher_id')->references('id')->on('purchase_vouchers')->onDelete('cascade');
             $table->foreign('project_id')->references('id')->on('projects')->onDelete('cascade');
         });

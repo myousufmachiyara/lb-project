@@ -11,6 +11,7 @@ use App\Models\PurchaseVoucherDetail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Exception;
+use TCPDF;
 
 class PurchaseVoucherController extends Controller
 {
@@ -165,4 +166,87 @@ public function edit(PurchaseVoucher $purchaseVoucher)
             return redirect()->route('purchase-vouchers.index')->withErrors('Delete failed: ' . $e->getMessage());
         }
     }
+
+    public function print($id)
+    {
+        $voucher = PurchaseVoucher::with('coa', 'details.project', 'details.service')->findOrFail($id);
+
+        $pdf = new \TCPDF();
+
+        $pdf->SetTitle('Purchase Voucher - ' . $voucher->coa->name);
+        $pdf->SetMargins(10, 10, 10);
+        $pdf->AddPage();
+
+        $logo = public_path('images/company-logo.png'); // Update this if needed
+
+        $html = '
+            <div style="text-align: center;">
+                <img src="' . $logo . '" height="60"><br>
+                <h2>Purchase Voucher</h2>
+            </div>
+            <table cellspacing="0" cellpadding="4">
+                <tr>
+                    <td><strong>Vendor:</strong> ' . $voucher->coa->name . '</td>
+                    <td align="right"><strong>Date:</strong> ' . $voucher->date . '</td>
+                </tr>
+            </table>
+            <br><br>
+            <table border="1" cellpadding="4" cellspacing="0">
+                <thead>
+                    <tr style="background-color: #f5f5f5; font-weight: bold;">
+                        <th width="5%">#</th>
+                        <th width="15%">Project</th>
+                        <th width="17%">Service</th>
+                        <th width="21%">Description</th>
+                        <th width="8%">Qty</th>
+                        <th width="8%">Unit</th>
+                        <th width="10%">Rate</th>
+                        <th width="14%">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+        $totalAmount = 0;
+
+        foreach ($voucher->details as $index => $detail) {
+            $amount = $detail->qty * $detail->rate;
+            $totalAmount += $amount;
+
+            $html .= '
+                <tr>
+                    <td width="5%">' . ($index + 1) . '</td>
+                    <td width="15%">' . ($detail->project->name ?? '-') . '</td>
+                    <td width="17%">' . ($detail->service->name ?? '-') . '</td>
+                    <td width="21%">' . ($detail->description ?? '-') . '</td>
+                    <td width="8%" align="center">' . $detail->qty . '</td>
+                    <td width="8%" align="center">' . $detail->unit . '</td>
+                    <td width="10%" align="right">' . number_format($detail->rate, 2) . '</td>
+                    <td width="14%" align="right">' . number_format($amount, 2) . '</td>
+                </tr>';
+        }
+
+        $html .= '
+            <tr>
+                <td colspan="7" align="right"><strong>Total</strong></td>
+                <td align="right"><strong>' . number_format($totalAmount, 2) . '</strong></td>
+            </tr>';
+
+        $html .= '</tbody></table><br><br>';
+
+        $pdf->writeHTML($html, true, false, true, false, '');
+
+        // Signature block
+        $pdf->SetY(-40);
+        $signatureHtml = '
+            <table width="100%" cellpadding="4">
+                <tr>
+                    <td align="right"><strong>Approved By:</strong> ____________________</td>
+                </tr>
+            </table>';
+        $pdf->writeHTML($signatureHtml, true, false, true, false, '');
+
+        $pdf->lastPage();
+        return $pdf->Output('purchase-voucher-' . $voucher->id . '.pdf', 'I');
+    }
+
 }
